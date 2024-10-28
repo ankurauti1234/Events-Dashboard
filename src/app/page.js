@@ -54,11 +54,26 @@ const TIMEZONE_OFFSETS = {
 };
 
 const convertTimestamp = (timestamp, timezone) => {
-  const date = new Date(timestamp * 1000);
-  const utcDate = new Date(date.toUTCString());
+  // Convert timestamp to milliseconds if it's in seconds
+  const timestampMs =
+    typeof timestamp === "number" && timestamp < 100000000000
+      ? timestamp * 1000
+      : timestamp;
+
+  // Create date object from timestamp
+  const date = new Date(timestampMs);
+
+  // Get the UTC time
+  const utcDate = new Date(date.getTime());
+
+  // Get timezone offset in hours
   const offset = TIMEZONE_OFFSETS[timezone] || 0;
-  utcDate.setHours(utcDate.getHours() + offset);
-  
+
+  // Convert offset hours to milliseconds and add to UTC time
+  const offsetMs = offset * 60 * 60 * 1000;
+  utcDate.setTime(utcDate.getTime() + offsetMs);
+
+  // Format the date string
   return utcDate.toLocaleString("en-US", {
     year: "numeric",
     month: "short",
@@ -66,7 +81,8 @@ const convertTimestamp = (timestamp, timezone) => {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    timeZone: "UTC"
+    hour12: true,
+    timeZone: "UTC",
   });
 };
 
