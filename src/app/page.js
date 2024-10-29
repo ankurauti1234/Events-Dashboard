@@ -21,6 +21,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -114,6 +121,12 @@ function DevicePageContent() {
   const [refreshInterval, setRefreshInterval] = useState(30);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
+    const handleRefreshIntervalChange = (value) => {
+      setRefreshInterval(value);
+    };
+
+
+
   const convertTimestamp = useCallback(
     (timestamp) => {
       const timestampMs =
@@ -161,15 +174,59 @@ function DevicePageContent() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    let intervalId;
-    if (autoRefresh && deviceId) {
-      intervalId = setInterval(() => {
-        fetchAllData(deviceId, currentPage);
-      }, refreshInterval * 1000);
-    }
-    return () => clearInterval(intervalId);
-  }, [autoRefresh, refreshInterval, deviceId, currentPage]);
+    const fetchAllData = useCallback(
+      async (id, page) => {
+        setIsLoading(true);
+        setError("");
+        try {
+          const [
+            logoResponse,
+            afpResponse,
+            eventResponse,
+            memberGuestResponse,
+          ] = await Promise.all([
+            fetch(`${API_URL}/events/logo?deviceId=${id}`),
+            fetch(`${API_URL}/events/afp?deviceId=${id}`),
+            fetch(`${API_URL}/events/${id}?page=${page}&limit=${limit}`),
+            fetch(`${API_URL}/events/member-guest/${id}`),
+          ]);
+          const logoResult = await logoResponse.json();
+          const afpResult = await afpResponse.json();
+          const eventResult = await eventResponse.json();
+          const memberGuestResult = await memberGuestResponse.json();
+          setLogoData(logoResult.data || []);
+          setAudioData(afpResult.data || []);
+          setEventData(eventResult.events || []);
+          setTotalRecords(eventResult.total || 0);
+          setMemberGuestData(memberGuestResult.event?.Details || null);
+          setLastUpdated(new Date());
+          if (
+            logoResult.data.length === 0 &&
+            afpResult.data.length === 0 &&
+            eventResult.events.length === 0 &&
+            !memberGuestResult.event
+          ) {
+            setError("No data found for this device ID.");
+          }
+        } catch (error) {
+          setError("Error fetching data");
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      [limit]
+    );
+
+
+    useEffect(() => {
+      let intervalId;
+      if (autoRefresh && deviceId) {
+        intervalId = setInterval(() => {
+          fetchAllData(deviceId, currentPage);
+        }, parseInt(refreshInterval) * 1000);
+      }
+      return () => clearInterval(intervalId);
+    }, [autoRefresh, refreshInterval, deviceId, currentPage]);
 
   const clearAuthCookies = () => {
     Cookies.remove("token");
@@ -184,44 +241,6 @@ function DevicePageContent() {
     router.push("/login");
   };
 
-  const fetchAllData = useCallback(
-    async (id, page) => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const [logoResponse, afpResponse, eventResponse, memberGuestResponse] =
-          await Promise.all([
-            fetch(`${API_URL}/events/logo?deviceId=${id}`),
-            fetch(`${API_URL}/events/afp?deviceId=${id}`),
-            fetch(`${API_URL}/events/${id}?page=${page}&limit=${limit}`),
-            fetch(`${API_URL}/events/member-guest/${id}`),
-          ]);
-        const logoResult = await logoResponse.json();
-        const afpResult = await afpResponse.json();
-        const eventResult = await eventResponse.json();
-        const memberGuestResult = await memberGuestResponse.json();
-        setLogoData(logoResult.data || []);
-        setAudioData(afpResult.data || []);
-        setEventData(eventResult.events || []);
-        setTotalRecords(eventResult.total || 0);
-        setMemberGuestData(memberGuestResult.event?.Details || null);
-        setLastUpdated(new Date());
-        if (
-          logoResult.data.length === 0 &&
-          afpResult.data.length === 0 &&
-          eventResult.events.length === 0 &&
-          !memberGuestResult.event
-        ) {
-          setError("No data found for this device ID.");
-        }
-      } catch (error) {
-        setError("Error fetching data");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [limit]
-  );
 
   const handleSearch = () => {
     if (deviceId) {
@@ -370,7 +389,7 @@ function DevicePageContent() {
   return (
     <div className="mx-auto p-6 space-y-6 bg-gradient-to-b from-background to-background/80 container">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-4xl font-bold text-foreground">
+        <h1 className="text-2xl font-bold text-foreground">
           Device ID: <span className="text-primary">{deviceId}</span> Live Feed
         </h1>
         <div className="flex items-center gap-2">
@@ -411,20 +430,20 @@ function DevicePageContent() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Card className="w-full mx-auto shadow-lg">
+      <Card className="w-full mx-auto">
         <CardHeader className="space-y-1 p-3 ">
-          <CardTitle className="text-2xl">Device Search and Control</CardTitle>
+          <CardTitle className="text-lg">Device Search and Control</CardTitle>
         </CardHeader>
         <CardContent className="p-3 pt-0">
           <div className=" flex flex-col sm:flex-row items-center gap-4 pb-3">
-            <div className="relative flex-1 w-full">
+            <div className="relative flex-1 w-full bg-popover">
               <Laptop className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
                 type="text"
                 placeholder="Enter Device ID"
                 value={deviceId}
                 onChange={(e) => setDeviceId(e.target.value)}
-                className="pl-10 h-12 w-full"
+                className="pl-10 h-12 w-full "
               />
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -445,8 +464,8 @@ function DevicePageContent() {
               </Button>
             </div>
           </div>
-<Separator/>
-          <div className="pt-4 ">
+          <Separator />
+          <div className="pt-4">
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="auto-refresh"
@@ -461,25 +480,29 @@ function DevicePageContent() {
               />
             </div>
             {autoRefresh && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mt-2">
                 <Label
                   htmlFor="refresh-interval"
                   className="text-sm whitespace-nowrap"
                 >
                   Refresh every
                 </Label>
-                <div className="flex items-center gap-2 flex-1">
-                  <Input
-                    id="refresh-interval"
-                    type="number"
-                    value={refreshInterval}
-                    onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                    className="w-20 h-9"
-                    min="5"
-                    max="600"
-                  />
-                  <span className="text-sm text-muted-foreground">seconds</span>
-                </div>
+                <Select
+                  value={refreshInterval}
+                  onValueChange={handleRefreshIntervalChange}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select interval" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 seconds</SelectItem>
+                    <SelectItem value="10">10 seconds</SelectItem>
+                    <SelectItem value="30">30 seconds</SelectItem>
+                    <SelectItem value="60">1 minute</SelectItem>
+                    <SelectItem value="300">5 minutes</SelectItem>
+                    <SelectItem value="600">10 minutes</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>

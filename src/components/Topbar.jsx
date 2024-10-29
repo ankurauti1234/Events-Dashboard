@@ -91,7 +91,7 @@ export default function Topbar({ toggleSidebar }) {
   };
 
   return (
-    <div className="bg-card px-4 py-2 flex justify-between items-center border-b z-50">
+    <div className=" px-4 py-2 flex justify-between items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b border-border/40 shadow-sm">
       <div className="flex items-center">
         <Button
           variant="ghost"
@@ -165,7 +165,7 @@ export default function Topbar({ toggleSidebar }) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="p-0">
               <Avatar>
-                <AvatarImage src="/placeholder-avatar.jpg" />
+                {/* <AvatarImage src="/placeholder.svg" /> */}
                 <AvatarFallback>
                   {username ? username.charAt(0).toUpperCase() : "U"}
                 </AvatarFallback>
@@ -173,7 +173,15 @@ export default function Topbar({ toggleSidebar }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{username || "User"}</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              {" "}
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{username}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {Cookies.get("email")}
+                </p>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />

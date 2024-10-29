@@ -9,34 +9,19 @@ import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import Image from "next/image";
-import {
-  User,
-  Eye,
-  EyeOff,
-  Lock,
-  Shield,
-  UserCheck,
-  RefreshCcw,
-} from "lucide-react";
+import { User, Eye, EyeOff, Lock, RefreshCcw } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Toaster, toast } from "sonner";
 
 export default function Login() {
   const [emailOrname, setEmailOrname] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState("visitor");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -58,7 +43,7 @@ export default function Login() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ emailOrname, password, userType }),
+          body: JSON.stringify({ emailOrname, password }),
         }
       );
 
@@ -88,117 +73,101 @@ export default function Login() {
   };
 
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center p-24 bg-cover bg-center"
-      style={{ backgroundImage: "url('/images/loginBg.png')" }}
-    >
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-primary/20 to-secondary/20">
       <Toaster />
-      <Card className="w-full max-w-md bg-card rounded-3xl py-6 px-4">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-center">
+      <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm shadow-xl">
+        <CardHeader className="space-y-1 flex flex-col items-center">
+          <div className="relative w-20 h-20 mb-2">
             <Image
-              src="/images/logo-full.svg"
+              src="/images/inditronics_logo.svg"
               alt="logo"
-              width={180}
-              height={50}
-              className=" drop-shadow-2xl"
+              layout="fill"
+              objectFit="contain"
+              className="drop-shadow-md"
             />
-          </CardTitle>
+          </div>
+          <CardTitle className="text-2xl font-bold">Inditronics</CardTitle>
+          <CardDescription className="text-center text-muted-foreground">
+            Login to access your Dashboard
+          </CardDescription>
         </CardHeader>
+
         <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="flex w-full items-center justify-between mb-8">
-              <h1 className="text-3xl font-thin ">Login</h1>
-              <div>
-                <Label className="text-xs">Select role</Label>
-                <Select value={userType} onValueChange={setUserType}>
-                  <SelectTrigger className="w-[180px] rounded-full font-semibold border-none">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">
-                      <div className="flex items-center">
-                        <Shield className="mr-2 w-4 h-4" />
-                        Admin
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="moderator">
-                      <div className="flex items-center">
-                        <UserCheck className="mr-2 w-4 h-4" />
-                        Moderator
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="visitor">
-                      <div className="flex items-center">
-                        <User className="mr-2 w-4 h-4" />
-                        Visitor
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="emailOrname" className="text-sm font-medium">
+                Email or Username
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="emailOrname"
+                  type="text"
+                  placeholder="Enter your email or username"
+                  value={emailOrname}
+                  onChange={(e) => setEmailOrname(e.target.value)}
+                  className="pl-10 bg-background/50"
+                  required
+                />
               </div>
             </div>
-            <div className="space-y-0">
-              <div className="space-y-6">
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="emailOrname"
-                    type="text"
-                    placeholder="Enter your email or name"
-                    value={emailOrname}
-                    onChange={(e) => setEmailOrname(e.target.value)}
-                    className="pl-10 bg-accent rounded-full border-none"
-                  />
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-accent rounded-full border-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
-              <div className="text-right">
-                <Link
-                  href="/forgot-password"
-                  className="text-xs font-bold text-blue-600 hover:underline"
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 bg-background/50"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  Forgot Password?
-                </Link>
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
           </form>
         </CardContent>
-        <CardFooter>
-          <div className="flex flex-col w-full">
-            <Button
-              className="w-full rounded-full text-lg font-bold"
-              type="submit"
-              onClick={handleSubmit}
-              disabled={loading}
+        <CardFooter className="flex flex-col space-y-4">
+          <Button
+            className="w-full"
+            type="submit"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                Please wait
+              </>
+            ) : (
+              "Login"
+            )}
+          </Button>
+          {/* <div className="flex justify-between w-full text-sm">
+            <Link
+              href="/forgot-password"
+              className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary rounded"
             >
-              {loading ? (
-                <>
-                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
-                </>
-              ) : (
-                "Login"
-              )}
-            </Button>
-          </div>
+              Forgot Password?
+            </Link>
+            <Link
+              href="/signup"
+              className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary rounded"
+            >
+              Create an account
+            </Link>
+          </div> */}
         </CardFooter>
       </Card>
     </div>
