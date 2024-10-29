@@ -5,8 +5,6 @@ import {
   Sun,
   Moon,
   Laptop,
-  Settings,
-  HelpCircle,
   LogOut,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -177,14 +175,6 @@ export default function Topbar({ toggleSidebar }) {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{username || "User"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <HelpCircle className="mr-2 h-4 w-4" />
-              <span>Support</span>
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span className="text-red-500">Logout</span>
