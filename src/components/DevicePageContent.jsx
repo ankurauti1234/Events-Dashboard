@@ -102,7 +102,7 @@ export default function DevicePageContent() {
             fetch(`${API_URL}/events/${id}?type=29`),
             fetch(`${API_URL}/events/${id}?type=28`),
             fetch(`${API_URL}/events/${id}?page=${page}&limit=${limit}`),
-            fetch(`${API_URL}/events/member-guest/${id}`),
+            fetch(`${API_URL}/events/latest?deviceId=${id}&type=3`),
           ]);
         const logoResult = await logoResponse.json();
         const afpResult = await afpResponse.json();
