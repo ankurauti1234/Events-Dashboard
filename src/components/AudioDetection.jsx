@@ -86,16 +86,16 @@ export default function AudioDetection({ data, convertTimestamp }) {
                     <TableCell>{convertTimestamp(item.TS)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 border w-fit p-1 rounded-lg bg-card">
-                        <div className="relative w-8 h-8 ">
+                        <div className="relative w-8 h-8">
                           <Image
-                            src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.channel_id}.png`}
-                            alt={item.channel_id}
+                            src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.Details.channel_id}.png`}
+                            alt={item.Details.channel_id}
                             layout="fill"
                             objectFit="cover"
                             className="rounded-lg"
                           />
                         </div>
-                        {item.channel_id}
+                        {item.Details.channel_id}
                       </div>
                     </TableCell>
                   </TableRow>

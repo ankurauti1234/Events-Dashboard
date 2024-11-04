@@ -79,7 +79,7 @@ export default function LogoDetection({ data, convertTimestamp }) {
                 <TableHead className="w-full flex items-center justify-center">
                   <Button
                     variant="ghost"
-                    onClick={() => handleSort("confidence")}
+                    onClick={() => handleSort("Details.accuracy")}
                   >
                     Confidence
                     <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -98,27 +98,27 @@ export default function LogoDetection({ data, convertTimestamp }) {
                       <div className="flex items-center gap-2 border w-fit p-1 rounded-lg bg-card">
                         <div className="relative w-10 h-10">
                           <Image
-                            src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.channel_id}.png`}
-                            alt={item.logoDetection || item.channel_id}
+                            src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.Details.channel_id}.png`}
+                            alt={item.Details.channel_id}
                             layout="fill"
                             objectFit="cover"
                             className="rounded-lg"
                           />
                         </div>
-                        {item.channel_id}
+                        {item.Details.channel_id}
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={`${
-                          item.accuracy < 0.5
+                        className={
+                          item.Details.accuracy < 0.5
                             ? "bg-red-500 text-white"
-                            : item.accuracy > 0.75
+                            : item.Details.accuracy > 0.75
                             ? "bg-green-500 text-white"
                             : "bg-yellow-500 text-black"
-                        }`}
+                        }
                       >
-                        {(item.accuracy * 100).toFixed(1)}%
+                        {(item.Details.accuracy * 100).toFixed(1)}%
                       </Badge>
                     </TableCell>
                   </TableRow>
