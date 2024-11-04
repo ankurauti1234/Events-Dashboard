@@ -5,37 +5,23 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
   RefreshCw,
   Search,
   AlertCircle,
-  BarChart2,
-  Radio,
-  Tv,
   Laptop,
-  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,9 +36,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import Topbar from "@/components/Topbar";
 import { useTimezoneStore } from "@/stores/timezoneStore";
-import Image from "next/image";
 import Cookies from "js-cookie";
 import { Separator } from "@/components/ui/separator";
+
+import LogoDetection from "@/components/LogoDetection";
+import AudioDetection from "@/components/AudioDetection";
+import MemberWatchingState from "@/components/MemberWatchingState";
+import EventsTable from "@/components/EventsTable";
+// import AlertTable from "@/components/AlertTable";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://apmapis.webdevava.live/api";
@@ -61,42 +52,6 @@ const TIMEZONE_OFFSETS = {
   "Indian Time": 5.5,
   "Russian Time": 3,
 };
-
-function MemberCard({ member, index }) {
-  const { state, gender, age } = member;
-  const isActive = state;
-
-  return (
-    <Card
-      className={`w-full ${
-        isActive ? "bg-popover border-green-700" : "bg-popover border-secondary"
-      }`}
-    >
-      <CardHeader className="p-4">
-        <CardTitle className="text-lg flex justify-between items-center">
-          <span>Member {index + 1}</span>
-          <Badge variant={isActive ? "success" : "secondary"}>
-            {isActive ? "Active" : "Inactive"}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className="flex flex-col space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm font-medium">Gender:</span>
-            <span className="text-sm">
-              {gender === "m" ? "Male" : "Female"}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm font-medium">Age:</span>
-            <span className="text-sm">{age} years</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function DevicePageContent() {
   const router = useRouter();
@@ -107,10 +62,6 @@ function DevicePageContent() {
   const [audioData, setAudioData] = useState([]);
   const [eventData, setEventData] = useState([]);
   const [memberGuestData, setMemberGuestData] = useState(null);
-  const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: "ascending",
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -121,11 +72,9 @@ function DevicePageContent() {
   const [refreshInterval, setRefreshInterval] = useState(30);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
-    const handleRefreshIntervalChange = (value) => {
-      setRefreshInterval(value);
-    };
-
-
+  const handleRefreshIntervalChange = (value) => {
+    setRefreshInterval(value);
+  };
 
   const convertTimestamp = useCallback(
     (timestamp) => {
@@ -174,59 +123,54 @@ function DevicePageContent() {
     }
   }, [searchParams]);
 
-    const fetchAllData = useCallback(
-      async (id, page) => {
-        setIsLoading(true);
-        setError("");
-        try {
-          const [
-            logoResponse,
-            afpResponse,
-            eventResponse,
-            memberGuestResponse,
-          ] = await Promise.all([
+  const fetchAllData = useCallback(
+    async (id, page) => {
+      setIsLoading(true);
+      setError("");
+      try {
+        const [logoResponse, afpResponse, eventResponse, memberGuestResponse] =
+          await Promise.all([
             fetch(`${API_URL}/events/logo?deviceId=${id}`),
             fetch(`${API_URL}/events/afp?deviceId=${id}`),
             fetch(`${API_URL}/events/${id}?page=${page}&limit=${limit}`),
             fetch(`${API_URL}/events/member-guest/${id}`),
           ]);
-          const logoResult = await logoResponse.json();
-          const afpResult = await afpResponse.json();
-          const eventResult = await eventResponse.json();
-          const memberGuestResult = await memberGuestResponse.json();
-          setLogoData(logoResult.data || []);
-          setAudioData(afpResult.data || []);
-          setEventData(eventResult.events || []);
-          setTotalRecords(eventResult.total || 0);
-          setMemberGuestData(memberGuestResult.event?.Details || null);
-          setLastUpdated(new Date());
-          if (
-            logoResult.data.length === 0 &&
-            afpResult.data.length === 0 &&
-            eventResult.events.length === 0 &&
-            !memberGuestResult.event
-          ) {
-            setError("No data found for this device ID.");
-          }
-        } catch (error) {
-          setError("Error fetching data");
-        } finally {
-          setIsLoading(false);
+        const logoResult = await logoResponse.json();
+        const afpResult = await afpResponse.json();
+        const eventResult = await eventResponse.json();
+        const memberGuestResult = await memberGuestResponse.json();
+        setLogoData(logoResult.data || []);
+        setAudioData(afpResult.data || []);
+        setEventData(eventResult.events || []);
+        setTotalRecords(eventResult.total || 0);
+        setMemberGuestData(memberGuestResult.event?.Details || null);
+        setLastUpdated(new Date());
+        if (
+          logoResult.data.length === 0 &&
+          afpResult.data.length === 0 &&
+          eventResult.events.length === 0 &&
+          !memberGuestResult.event
+        ) {
+          setError("No data found for this device ID.");
         }
-      },
-      [limit]
-    );
-
-
-    useEffect(() => {
-      let intervalId;
-      if (autoRefresh && deviceId) {
-        intervalId = setInterval(() => {
-          fetchAllData(deviceId, currentPage);
-        }, parseInt(refreshInterval) * 1000);
+      } catch (error) {
+        setError("Error fetching data");
+      } finally {
+        setIsLoading(false);
       }
-      return () => clearInterval(intervalId);
-    }, [autoRefresh, refreshInterval, deviceId, currentPage]);
+    },
+    [limit]
+  );
+
+  useEffect(() => {
+    let intervalId;
+    if (autoRefresh && deviceId) {
+      intervalId = setInterval(() => {
+        fetchAllData(deviceId, currentPage);
+      }, parseInt(refreshInterval) * 1000);
+    }
+    return () => clearInterval(intervalId);
+  }, [autoRefresh, refreshInterval, deviceId, currentPage, fetchAllData]);
 
   const clearAuthCookies = () => {
     Cookies.remove("token");
@@ -240,7 +184,6 @@ function DevicePageContent() {
     setTokenExpired(false);
     router.push("/login");
   };
-
 
   const handleSearch = () => {
     if (deviceId) {
@@ -256,134 +199,9 @@ function DevicePageContent() {
     }
   };
 
-  const handleSort = (key) => {
-    let direction = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  const sortedData = (data) => {
-    if (!sortConfig.key) return data;
-    return [...data].sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
-        return sortConfig.direction === "ascending" ? -1 : 1;
-      }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
-        return sortConfig.direction === "ascending" ? 1 : -1;
-      }
-      return 0;
-    });
-  };
-
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     fetchAllData(deviceId, newPage);
-  };
-
-  const renderDetectionTable = (data, type) => {
-    if (!Array.isArray(data) || data.length === 0) {
-      return (
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>
-              {type === "logo"
-                ? "No logo detection data"
-                : "No audio detection data"}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      );
-    }
-
-    return (
-      <Card className="w-full">
-        <CardHeader className=" p-3">
-          <CardTitle className="flex items-center gap-2">
-            {type === "logo" ? (
-              <Tv className="h-5 w-5" />
-            ) : (
-              <Radio className="h-5 w-5" />
-            )}
-            {type === "logo"
-              ? "Logo Detection Output"
-              : "Audio Detection Output"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <div className="rounded-lg overflow-hidden border">
-            <Table className="bg-popover">
-              <TableHeader>
-                <TableRow className="flex w-full justify-between items-center">
-                  <TableHead className="w-full flex items-center justify-center">
-                    <Button variant="ghost" onClick={() => handleSort("TS")}>
-                      Timestamp
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead className="w-full flex items-center justify-center">
-                    Detection
-                  </TableHead>
-                  {type === "logo" && (
-                    <TableHead className="w-full flex items-center justify-center">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort("confidence")}
-                      >
-                        Confidence
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-            </Table>
-            <ScrollArea className="h-[45vh] bg-popover">
-              <Table>
-                <TableBody>
-                  {sortedData(data).map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{convertTimestamp(item.TS)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="relative w-10 h-10">
-                            <Image
-                              src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.channel_id}.png`}
-                              alt={item.logoDetection || item.channel_id}
-                              layout="fill"
-                              objectFit="cover"
-                              className="rounded-full"
-                            />
-                          </div>
-                          {item.channel_id}
-                        </div>
-                      </TableCell>
-                      {type === "logo" && (
-                        <TableCell>
-                          <Badge
-                            className={`${
-                              item.accuracy < 0.5
-                                ? "bg-red-500 text-white"
-                                : item.accuracy > 0.75
-                                ? "bg-green-500 text-white"
-                                : "bg-yellow-500 text-black"
-                            }`}
-                          >
-                            {(item.accuracy * 100).toFixed(1)}%
-                          </Badge>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <ScrollBar orientation="vertical" />
-            </ScrollArea>
-          </div>
-        </CardContent>
-      </Card>
-    );
   };
 
   return (
@@ -492,15 +310,18 @@ function DevicePageContent() {
                   onValueChange={handleRefreshIntervalChange}
                 >
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select interval" />
+                    <SelectValue placeholder="30 seconds" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="5">5 seconds</SelectItem>
-                    <SelectItem value="10">10 seconds</SelectItem>
-                    <SelectItem value="30">30 seconds</SelectItem>
-                    <SelectItem value="60">1 minute</SelectItem>
-                    <SelectItem value="300">5 minutes</SelectItem>
-                    <SelectItem value="600">10 minutes</SelectItem>
+                    <SelectGroup>
+                      <SelectLabel>Refresh Rates</SelectLabel>
+                      <SelectItem value="5">5 seconds</SelectItem>
+                      <SelectItem value="10">10 seconds</SelectItem>
+                      <SelectItem value="30">30 seconds</SelectItem>
+                      <SelectItem value="60">1 minute</SelectItem>
+                      <SelectItem value="300">5 minutes</SelectItem>
+                      <SelectItem value="600">10 minutes</SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -524,110 +345,32 @@ function DevicePageContent() {
           </>
         ) : (
           <>
-            {renderDetectionTable(logoData, "logo")}
-            {renderDetectionTable(audioData, "audio")}
+            <LogoDetection
+              data={logoData}
+              convertTimestamp={convertTimestamp}
+            />
+            <AudioDetection
+              data={audioData}
+              convertTimestamp={convertTimestamp}
+            />
           </>
         )}
       </div>
 
       {!isLoading && deviceId && memberGuestData && (
-        <Card>
-          <CardHeader className="p-3">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Member Watching State
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {memberGuestData.state.map((state, index) => (
-                <MemberCard
-                  key={index}
-                  member={{
-                    state: state,
-                    gender: memberGuestData.gender[index],
-                    age: memberGuestData.age[index],
-                  }}
-                  index={index}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <MemberWatchingState memberGuestData={memberGuestData} />
       )}
 
-      <Card>
-        <CardHeader className="p-3">
-          <CardTitle className="flex items-center gap-2">
-            <BarChart2 className="h-5 w-5" />
-            Events
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          {isLoading ? (
-            <Skeleton className="h-[300px] w-full" />
-          ) : (
-            <div className="rounded-lg overflow-hidden bg-popover border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Device ID</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Event Type</TableHead>
-                    <TableHead>Details</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {eventData.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center">
-                        No events found.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    eventData.map((event) => (
-                      <TableRow key={event._id}>
-                        <TableCell>{event.DEVICE_ID}</TableCell>
-                        <TableCell>{convertTimestamp(event.TS)}</TableCell>
-                        <TableCell>{event.Event_Name}</TableCell>
-                        <TableCell>
-                          {typeof event.Details === "string"
-                            ? event.Details
-                            : JSON.stringify(event.Details)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+      <EventsTable
+        eventData={eventData}
+        convertTimestamp={convertTimestamp}
+        totalRecords={totalRecords}
+        limit={limit}
+        currentPage={currentPage}
+        handlePageChange={handlePageChange}
+      />
 
-              {totalRecords > limit && (
-                <div className="flex justify-between items-center mt-4 p-2 border-t">
-                  <Button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    variant="outline"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-2" />
-                    Previous
-                  </Button>
-                  <span>
-                    Page {currentPage} of {Math.ceil(totalRecords / limit)}
-                  </span>
-                  <Button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage >= Math.ceil(totalRecords / limit)}
-                    variant="outline"
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* <AlertTable/> */}
     </div>
   );
 }
