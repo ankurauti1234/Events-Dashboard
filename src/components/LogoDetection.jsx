@@ -98,7 +98,7 @@ export default function LogoDetection({ data, convertTimestamp }) {
                       <div className="flex items-center gap-2 border w-fit p-1 rounded-lg bg-card">
                         <div className="relative w-8 h-8">
                           <Image
-                            src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.Details.channel_id}.png`}
+                            src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.Details.channel_id.trim()}.png`}
                             alt={item.Details.channel_id}
                             layout="fill"
                             objectFit="cover"
