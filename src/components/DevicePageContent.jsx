@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowUpDown,
@@ -8,6 +8,7 @@ import {
   Search,
   AlertCircle,
   Laptop,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ import LogoDetection from "@/components/LogoDetection";
 import AudioDetection from "@/components/AudioDetection";
 import MemberWatchingState from "@/components/MemberWatchingState";
 import EventsTable from "@/components/EventsTable";
+import { ScrollArea } from "./ui/scroll-area";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://apmapis.webdevava.live/api";
@@ -52,6 +54,8 @@ export default function DevicePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [deviceId, setDeviceId] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [logoData, setLogoData] = useState([]);
   const [audioData, setAudioData] = useState([]);
   const [eventData, setEventData] = useState([]);
@@ -66,6 +70,7 @@ export default function DevicePageContent() {
   const [refreshInterval, setRefreshInterval] = useState(30);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [timezone, setTimezone] = useState("Indian Time");
+  const inputRef = useRef(null);
 
   const convertTimestamp = useCallback(
     (timestamp) => {
@@ -94,6 +99,8 @@ export default function DevicePageContent() {
 
   const fetchAllData = useCallback(
     async (id, page) => {
+      if (!id) return;
+
       setIsLoading(true);
       setError("");
       try {
@@ -139,6 +146,12 @@ export default function DevicePageContent() {
       setDeviceId(urlDeviceId);
       fetchAllData(urlDeviceId, 1);
     }
+
+    // Load suggestions from localStorage
+    const savedSuggestions = JSON.parse(
+      localStorage.getItem("deviceSuggestions") || "[]"
+    );
+    setSuggestions(savedSuggestions);
   }, [searchParams, fetchAllData]);
 
   useEffect(() => {
@@ -151,11 +164,24 @@ export default function DevicePageContent() {
     return () => clearInterval(intervalId);
   }, [autoRefresh, refreshInterval, deviceId, currentPage, fetchAllData]);
 
-  const handleSearch = () => {
-    if (deviceId) {
-      router.push(`?deviceId=${deviceId}`);
+  const handleSearch = (id = deviceId) => {
+    if (id) {
+      router.push(`?deviceId=${id}`);
       setCurrentPage(1);
-      fetchAllData(deviceId, 1);
+      fetchAllData(id, 1);
+
+      // Save to localStorage
+      const savedSuggestions = JSON.parse(
+        localStorage.getItem("deviceSuggestions") || "[]"
+      );
+      if (!savedSuggestions.includes(id)) {
+        savedSuggestions.unshift(id);
+        localStorage.setItem(
+          "deviceSuggestions",
+          JSON.stringify(savedSuggestions)
+        );
+        setSuggestions(savedSuggestions);
+      }
     }
   };
 
@@ -168,6 +194,46 @@ export default function DevicePageContent() {
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     fetchAllData(deviceId, newPage);
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setDeviceId(value);
+    if (value) {
+      const filteredSuggestions = suggestions.filter((suggestion) =>
+        suggestion.toLowerCase().includes(value.toLowerCase())
+      );
+      setSuggestions(filteredSuggestions);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions(
+        JSON.parse(localStorage.getItem("deviceSuggestions") || "[]")
+      );
+      setShowSuggestions(false);
+    }
+  };
+
+  // const handleSuggestionClick = (suggestion) => {
+  //   setDeviceId(suggestion);
+  //   setShowSuggestions(false);
+  //   router.push(`?deviceId=${suggestion}`);
+  // };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const removeSuggestion = (suggestionToRemove) => {
+    const updatedSuggestions = suggestions.filter(
+      (suggestion) => suggestion !== suggestionToRemove
+    );
+    setSuggestions(updatedSuggestions);
+    localStorage.setItem(
+      "deviceSuggestions",
+      JSON.stringify(updatedSuggestions)
+    );
   };
 
   return (
@@ -224,13 +290,49 @@ export default function DevicePageContent() {
                 type="text"
                 placeholder="Enter Device ID"
                 value={deviceId}
-                onChange={(e) => setDeviceId(e.target.value)}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 className="pl-10 h-12 w-full"
+                ref={inputRef}
               />
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 w-full bg-popover border mt-1 rounded-md shadow-lg">
+                  <ScrollArea className="h-48 w-full">
+                    {suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className=" hover:bg-accent cursor-pointer flex justify-between items-center"
+                      >
+                        <span
+                          onClick={() =>
+                            router.push(`?deviceId=${suggestion}`)
+                          }
+                          className=" w-full px-4 py-2"
+                        >
+                          {suggestion}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeSuggestion(suggestion);
+                          }}
+                          aria-label={`Remove ${suggestion} from suggestions`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </div>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <Button
-                onClick={handleSearch}
+                onClick={() => handleSearch()}
                 className="flex-1 h-12 bg-primary hover:bg-primary/90"
               >
                 <Search className="mr-2 h-5 w-5" />
@@ -294,18 +396,11 @@ export default function DevicePageContent() {
         </CardContent>
       </Card>
 
-      {error && (
-        <div className="flex items-center justify-center p-4 text-destructive bg-destructive/10 rounded-md">
-          <AlertCircle className="h-5 w-5 mr-2" />
-          <span className="font-semibold">{error}</span>
-        </div>
-      )}
-
       <div className="grid md:grid-cols-2 gap-6">
         {isLoading ? (
           <>
-            <Skeleton className="h-[300px] w-full" />
-            <Skeleton className="h-[300px] w-full" />
+            <Skeleton className="h-[300px] " />
+            <Skeleton className="h-[300px]" />
           </>
         ) : (
           <>
