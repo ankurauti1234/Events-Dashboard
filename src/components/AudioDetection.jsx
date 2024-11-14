@@ -82,13 +82,20 @@ export default function AudioDetection({ data, convertTimestamp }) {
             <Table>
               <TableBody>
                 {sortedData(data).map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{convertTimestamp(item.TS)}</TableCell>
-                    <TableCell>
+                  <TableRow
+                    key={index}
+                    className="flex items-center justify-between"
+                  >
+                    <TableCell className="flex-1 flex justify-center">
+                      {convertTimestamp(item.TS)}
+                    </TableCell>
+                    <TableCell className="flex-1 flex justify-center">
                       <div className="flex items-center gap-2 border w-fit p-1 rounded-lg bg-card">
                         <div className="relative w-8 h-8">
                           <Image
-                            src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.Details.channel_id.trim()}.png`}
+                            // src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.Details.channel_id.trim()}.png`}
+
+                            src="/images/radio-city.jpeg"
                             alt={item.Details.channel_id}
                             layout="fill"
                             objectFit="cover"

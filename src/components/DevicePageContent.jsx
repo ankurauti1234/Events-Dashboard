@@ -396,7 +396,7 @@ export default function DevicePageContent() {
         </CardContent>
       </Card>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="flex gap-6">
         {isLoading ? (
           <>
             <Skeleton className="h-[300px] " />
@@ -404,10 +404,10 @@ export default function DevicePageContent() {
           </>
         ) : (
           <>
-            <LogoDetection
-              data={logoData}
-              convertTimestamp={convertTimestamp}
-            />
+              {!logoData && <LogoDetection
+                data={logoData}
+                convertTimestamp={convertTimestamp}
+              />}
             <AudioDetection
               data={audioData}
               convertTimestamp={convertTimestamp}
@@ -416,9 +416,9 @@ export default function DevicePageContent() {
         )}
       </div>
 
-      {!isLoading && deviceId && memberGuestData && (
+      {/* {!isLoading && deviceId && memberGuestData && (
         <MemberWatchingState memberGuestData={memberGuestData} />
-      )}
+      )} */}
 
       <EventsTable
         eventData={eventData}
