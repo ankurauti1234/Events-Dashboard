@@ -113,8 +113,8 @@ export default function Topbar() {
       className={cn(
         "px-4 py-2 flex justify-between items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b border-border/40 transition-all duration-200",
         {
-          "shadow-md": isScrolled,
-          "shadow-sm": !isScrolled,
+          "shadow-md rounded-full border-2": isScrolled,
+          "shadow-sm p-2": !isScrolled,
         }
       )}
     >

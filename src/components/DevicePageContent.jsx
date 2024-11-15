@@ -15,6 +15,7 @@ import {
   RefreshCcw,
   Download,
   Users,
+  BadgeInfo,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -270,216 +271,246 @@ export default function EnhancedDevicePageContent() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl font-bold">
-            Device Search and Control
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Settings className="h-4 w-4" />
+      <div className="flex flex-row-reverse">
+        <Card className="w-full max-w-lg mx-auto">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <BadgeInfo className="w-6 h-6 text-primary" />
+              Device Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-accent p-4 rounded-lg border ">
+              <div className="text-sm text-secondary-foreground mb-1">
+                Currently Searched Device ID
+              </div>
+              <div className="text-3xl font-bold text-primary break-all">
+                {deviceId || "No device selected"}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-2xl font-bold">
+              Device Search and Control
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Display Settings</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Show Logo Detection</Label>
+                      <Switch
+                        checked={settings.showLogoTable}
+                        onCheckedChange={() =>
+                          toggleTableVisibility("LogoTable")
+                        }
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Show Audio Detection</Label>
+                      <Switch
+                        checked={settings.showAudioTable}
+                        onCheckedChange={() =>
+                          toggleTableVisibility("AudioTable")
+                        }
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Show Member Watching</Label>
+                      <Switch
+                        checked={settings.showMemberWatching}
+                        onCheckedChange={() =>
+                          toggleTableVisibility("MemberWatching")
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Layout</Label>
+                      <Select
+                        value={settings.layout}
+                        onValueChange={(value) =>
+                          setSettings((prev) => ({ ...prev, layout: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={LAYOUTS.SIDE_BY_SIDE}>
+                            Side by Side
+                          </SelectItem>
+                          <SelectItem value={LAYOUTS.STACKED}>
+                            Stacked
+                          </SelectItem>
+                          <SelectItem value={LAYOUTS.TABBED}>Tabbed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Compact View</Label>
+                      <Switch
+                        checked={settings.compactView}
+                        onCheckedChange={(checked) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            compactView: checked,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Select value={timezone} onValueChange={setTimezone}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(TIMEZONE_OFFSETS).map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center space-x-2">
+                <div className="relative flex-1">
+                  <Laptop className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Enter Device ID"
+                    value={deviceId}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                        .replace(/[^0-9]/g, "")
+                        .slice(0, 10);
+                      setDeviceId(newValue);
+                    }}
+                    className="pl-8"
+                    onFocus={() => setShowSuggestions(true)}
+                  />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <ScrollArea className="absolute z-10 w-full max-h-32 bg-popover border rounded-md shadow-md">
+                      {suggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer"
+                          onClick={() => {
+                            setDeviceId(suggestion);
+                            setShowSuggestions(false);
+                            handleSearch(suggestion);
+                          }}
+                        >
+                          <span>{suggestion}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newSuggestions = suggestions.filter(
+                                (s) => s !== suggestion
+                              );
+                              setSuggestions(newSuggestions);
+                              localStorage.setItem(
+                                "deviceSuggestions",
+                                JSON.stringify(newSuggestions)
+                              );
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  )}
+                </div>
+                <Button
+                  onClick={() => handleSearch()}
+                  className="flex items-center gap-2"
+                >
+                  <Search className="h-4 w-4" />
+                  Search
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Display Settings</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="flex items-center justify-between">
-                    <Label>Show Logo Detection</Label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
                     <Switch
-                      checked={settings.showLogoTable}
-                      onCheckedChange={() => toggleTableVisibility("LogoTable")}
+                      id="auto-refresh"
+                      checked={autoRefresh}
+                      onCheckedChange={setAutoRefresh}
                     />
+                    <Label htmlFor="auto-refresh">Auto-refresh</Label>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Show Audio Detection</Label>
-                    <Switch
-                      checked={settings.showAudioTable}
-                      onCheckedChange={() =>
-                        toggleTableVisibility("AudioTable")
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Show Member Watching</Label>
-                    <Switch
-                      checked={settings.showMemberWatching}
-                      onCheckedChange={() =>
-                        toggleTableVisibility("MemberWatching")
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Layout</Label>
+                  {autoRefresh && (
                     <Select
-                      value={settings.layout}
+                      value={refreshInterval.toString()}
                       onValueChange={(value) =>
-                        setSettings((prev) => ({ ...prev, layout: value }))
+                        setRefreshInterval(parseInt(value))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-[140px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={LAYOUTS.SIDE_BY_SIDE}>
-                          Side by Side
-                        </SelectItem>
-                        <SelectItem value={LAYOUTS.STACKED}>Stacked</SelectItem>
-                        <SelectItem value={LAYOUTS.TABBED}>Tabbed</SelectItem>
+                        <SelectGroup>
+                          <SelectLabel>Refresh interval</SelectLabel>
+                          <SelectItem value="5">5 seconds</SelectItem>
+                          <SelectItem value="10">10 seconds</SelectItem>
+                          <SelectItem value="30">30 seconds</SelectItem>
+                          <SelectItem value="60">1 minute</SelectItem>
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Compact View</Label>
-                    <Switch
-                      checked={settings.compactView}
-                      onCheckedChange={(checked) =>
-                        setSettings((prev) => ({
-                          ...prev,
-                          compactView: checked,
-                        }))
-                      }
-                    />
-                  </div>
+                  )}
                 </div>
-              </DialogContent>
-            </Dialog>
-            <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(TIMEZONE_OFFSETS).map((tz) => (
-                  <SelectItem key={tz} value={tz}>
-                    {tz}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="relative flex-1">
-                <Laptop className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Enter Device ID"
-                  value={deviceId}
-                  onChange={(e) => {
-                    const newValue = e.target.value
-                      .replace(/[^0-9]/g, "")
-                      .slice(0, 10);
-                    setDeviceId(newValue);
-                  }}
-                  className="pl-8"
-                  onFocus={() => setShowSuggestions(true)}
-                />
-                {showSuggestions && suggestions.length > 0 && (
-                  <ScrollArea className="absolute z-10 w-full max-h-32 bg-popover border rounded-md shadow-md">
-                    {suggestions.map((suggestion, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer"
-                        onClick={() => {
-                          setDeviceId(suggestion);
-                          setShowSuggestions(false);
-                          handleSearch(suggestion);
-                        }}
-                      >
-                        <span>{suggestion}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const newSuggestions = suggestions.filter(
-                              (s) => s !== suggestion
-                            );
-                            setSuggestions(newSuggestions);
-                            localStorage.setItem(
-                              "deviceSuggestions",
-                              JSON.stringify(newSuggestions)
-                            );
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </ScrollArea>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchData(deviceId)}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Refresh
+                </Button>
               </div>
-              <Button
-                onClick={() => handleSearch()}
-                className="flex items-center gap-2"
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </Button>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="auto-refresh"
-                    checked={autoRefresh}
-                    onCheckedChange={setAutoRefresh}
-                  />
-                  <Label htmlFor="auto-refresh">Auto-refresh</Label>
-                </div>
-                {autoRefresh && (
-                  <Select
-                    value={refreshInterval.toString()}
-                    onValueChange={(value) =>
-                      setRefreshInterval(parseInt(value))
-                    }
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Refresh interval</SelectLabel>
-                        <SelectItem value="5">5 seconds</SelectItem>
-                        <SelectItem value="10">10 seconds</SelectItem>
-                        <SelectItem value="30">30 seconds</SelectItem>
-                        <SelectItem value="60">1 minute</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchData(deviceId)}
-                className="flex items-center gap-2"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {settings.layout === LAYOUTS.TABBED ? (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="logo" disabled={!settings.showLogoTable}>
+          <TabsList className="w-full">
+            <TabsTrigger
+              value="logo"
+              disabled={!settings.showLogoTable}
+              className="w-full"
+            >
               Logo Detection
             </TabsTrigger>
-            <TabsTrigger value="audio" disabled={!settings.showAudioTable}>
+            <TabsTrigger
+              value="audio"
+              disabled={!settings.showAudioTable}
+              className="w-full"
+            >
               Audio Detection
-            </TabsTrigger>
-            <TabsTrigger value="member" disabled={!settings.showMemberWatching}>
-              Member Watching
             </TabsTrigger>
           </TabsList>
           {settings.showLogoTable && activeTab === "logo" && (
@@ -504,11 +535,6 @@ export default function EnhancedDevicePageContent() {
               compact={settings.compactView}
             />
           )}
-          {settings.showMemberWatching &&
-            activeTab === "member" &&
-            memberGuestData && (
-              <MemberWatchingState memberGuestData={memberGuestData} />
-            )}
         </Tabs>
       ) : (
         <div className={getLayoutClassName()}>
@@ -534,10 +560,14 @@ export default function EnhancedDevicePageContent() {
               compact={settings.compactView}
             />
           )}
-          {settings.showMemberWatching && memberGuestData && (
-            <MemberWatchingState memberGuestData={memberGuestData} />
-          )}
         </div>
+      )}
+
+      {settings.showMemberWatching && (
+        <MemberWatchingState
+          memberGuestData={memberGuestData}
+          compact={settings.compactView}
+        />
       )}
     </div>
   );
