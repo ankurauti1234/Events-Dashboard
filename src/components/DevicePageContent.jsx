@@ -1,18 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowUpDown,
-  RefreshCw,
-  Search,
-  AlertCircle,
   Laptop,
+  Search,
   X,
+  Settings,
+  LayoutGrid,
+  LayoutList,
+  TableProperties,
+  Eye,
+  EyeOff,
+  RefreshCcw,
+  Download,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -22,25 +30,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-
-import LogoDetection from "@/components/LogoDetection";
-import AudioDetection from "@/components/AudioDetection";
-import MemberWatchingState from "@/components/MemberWatchingState";
-import EventsTable from "@/components/EventsTable";
-import { ScrollArea } from "./ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { LogoDetectionTable } from "./LogoDetection";
+import { AudioDetectionTable } from "./AudioDetection";
+import MemberWatchingState from "./MemberWatchingState";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://apmapis.webdevava.live/api";
@@ -48,29 +51,31 @@ const API_URL =
 const TIMEZONE_OFFSETS = {
   "Indian Time": 5.5,
   "Russian Time": 3,
+  UTC: 0,
+  EST: -5,
 };
 
-export default function DevicePageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+const LAYOUTS = {
+  SIDE_BY_SIDE: "side-by-side",
+  STACKED: "stacked",
+  TABBED: "tabbed",
+};
+
+export default function EnhancedDevicePageContent() {
   const [deviceId, setDeviceId] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [logoData, setLogoData] = useState([]);
-  const [audioData, setAudioData] = useState([]);
-  const [eventData, setEventData] = useState([]);
+  const [logoData, setLogoData] = useState({ events: [], total: 0 });
+  const [audioData, setAudioData] = useState({ events: [], total: 0 });
   const [memberGuestData, setMemberGuestData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [limit] = useState(10);
-  const [tokenExpired, setTokenExpired] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [refreshInterval, setRefreshInterval] = useState(30);
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(30);
   const [timezone, setTimezone] = useState("Indian Time");
-  const inputRef = useRef(null);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const convertTimestamp = useCallback(
     (timestamp) => {
@@ -97,80 +102,78 @@ export default function DevicePageContent() {
     [timezone]
   );
 
-  const fetchAllData = useCallback(
-    async (id, page) => {
+  const fetchData = useCallback(
+    async (
+      id,
+      logoPage = 1,
+      logoLimit = 10,
+      audioPage = 1,
+      audioLimit = 10
+    ) => {
       if (!id) return;
-
       setIsLoading(true);
       setError("");
       try {
-        const [logoResponse, afpResponse, eventResponse, memberGuestResponse] =
+        const [logoResponse, audioResponse, memberGuestResponse] =
           await Promise.all([
-            fetch(`${API_URL}/events/${id}?type=29`),
-            fetch(`${API_URL}/events/${id}?type=28`),
-            fetch(`${API_URL}/events/${id}?page=${page}&limit=${limit}`),
+            fetch(
+              `${API_URL}/events/${id}?type=29&page=${logoPage}&limit=${logoLimit}`
+            ),
+            fetch(
+              `${API_URL}/events/${id}?type=28&page=${audioPage}&limit=${audioLimit}`
+            ),
             fetch(`${API_URL}/events/latest?deviceId=${id}&type=3`),
           ]);
         const logoResult = await logoResponse.json();
-        const afpResult = await afpResponse.json();
-        const eventResult = await eventResponse.json();
+        const audioResult = await audioResponse.json();
         const memberGuestResult = await memberGuestResponse.json();
 
-        setLogoData(logoResult.events || []);
-        setAudioData(afpResult.events || []);
-        setEventData(eventResult.events || []);
-        setTotalRecords(eventResult.total || 0);
-        setMemberGuestData(memberGuestResult.event?.Details || null);
-        setLastUpdated(new Date());
+        setLogoData({
+          events: logoResult.events || [],
+          total: logoResult.total || 0,
+        });
 
-        if (
-          logoResult.events.length === 0 &&
-          afpResult.events.length === 0 &&
-          eventResult.events.length === 0 &&
-          !memberGuestResult.event
-        ) {
-          setError("No data found for this device ID.");
-        }
+        setAudioData({
+          events: audioResult.events || [],
+          total: audioResult.total || 0,
+        });
+
+        setMemberGuestData(memberGuestResult.event?.Details || null);
       } catch (error) {
         setError("Error fetching data");
       } finally {
         setIsLoading(false);
       }
     },
-    [limit]
+    []
   );
 
   useEffect(() => {
     const urlDeviceId = searchParams.get("deviceId");
     if (urlDeviceId) {
       setDeviceId(urlDeviceId);
-      fetchAllData(urlDeviceId, 1);
+      fetchData(urlDeviceId);
     }
-
-    // Load suggestions from localStorage
     const savedSuggestions = JSON.parse(
       localStorage.getItem("deviceSuggestions") || "[]"
     );
     setSuggestions(savedSuggestions);
-  }, [searchParams, fetchAllData]);
+  }, [searchParams, fetchData]);
 
   useEffect(() => {
     let intervalId;
     if (autoRefresh && deviceId) {
       intervalId = setInterval(() => {
-        fetchAllData(deviceId, currentPage);
-      }, parseInt(refreshInterval) * 1000);
+        fetchData(deviceId);
+      }, refreshInterval * 1000);
     }
     return () => clearInterval(intervalId);
-  }, [autoRefresh, refreshInterval, deviceId, currentPage, fetchAllData]);
+  }, [autoRefresh, refreshInterval, deviceId, fetchData]);
 
   const handleSearch = (id = deviceId) => {
     if (id) {
       router.push(`?deviceId=${id}`);
-      setCurrentPage(1);
-      fetchAllData(id, 1);
-
-      // Save to localStorage
+      fetchData(id);
       const savedSuggestions = JSON.parse(
         localStorage.getItem("deviceSuggestions") || "[]"
       );
@@ -185,249 +188,357 @@ export default function DevicePageContent() {
     }
   };
 
-  const handleRefresh = () => {
-    if (deviceId) {
-      fetchAllData(deviceId, currentPage);
-    }
-  };
-
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-    fetchAllData(deviceId, newPage);
-  };
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setDeviceId(value);
-    if (value) {
-      const filteredSuggestions = suggestions.filter((suggestion) =>
-        suggestion.toLowerCase().includes(value.toLowerCase())
-      );
-      setSuggestions(filteredSuggestions);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions(
-        JSON.parse(localStorage.getItem("deviceSuggestions") || "[]")
-      );
-      setShowSuggestions(false);
-    }
-  };
-
-  // const handleSuggestionClick = (suggestion) => {
-  //   setDeviceId(suggestion);
-  //   setShowSuggestions(false);
-  //   router.push(`?deviceId=${suggestion}`);
-  // };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
-  const removeSuggestion = (suggestionToRemove) => {
-    const updatedSuggestions = suggestions.filter(
-      (suggestion) => suggestion !== suggestionToRemove
+  const handleExport = (dataType, selectedData) => {
+    const csvContent = convertToCSV(selectedData);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `${dataType}_detection_${new Date().toISOString().split("T")[0]}.csv`
     );
-    setSuggestions(updatedSuggestions);
-    localStorage.setItem(
-      "deviceSuggestions",
-      JSON.stringify(updatedSuggestions)
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const convertToCSV = (data) => {
+    const excludeFields = ["__v", "_id", "TS", "ID"];
+    const processRow = (item) => {
+      const row = {};
+      Object.entries(item).forEach(([key, value]) => {
+        if (!excludeFields.includes(key)) {
+          if (key === "Details" && typeof value === "object") {
+            Object.entries(value).forEach(([detailKey, detailValue]) => {
+              row[detailKey] = detailValue;
+            });
+          } else {
+            row[key] = value;
+          }
+        }
+      });
+      return row;
+    };
+
+    const processedData = data.map(processRow);
+    const headers = Object.keys(processedData[0]);
+    const rows = processedData.map((row) =>
+      headers
+        .map((header) =>
+          typeof row[header] === "number" && header === "accuracy"
+            ? (row[header] * 100).toFixed(1) + "%"
+            : row[header]
+        )
+        .join(",")
     );
+
+    return [headers.join(","), ...rows].join("\n");
+  };
+
+  const [settings, setSettings] = useState({
+    showLogoTable: true,
+    showAudioTable: true,
+    showMemberWatching: true,
+    layout: LAYOUTS.SIDE_BY_SIDE,
+    darkMode: false,
+    compactView: false,
+  });
+
+  const [activeTab, setActiveTab] = useState("logo");
+
+  const toggleTableVisibility = (tableType) => {
+    setSettings((prev) => ({
+      ...prev,
+      [`show${tableType}`]: !prev[`show${tableType}`],
+    }));
+  };
+
+  const getLayoutClassName = () => {
+    switch (settings.layout) {
+      case LAYOUTS.SIDE_BY_SIDE:
+        return "flex flex-col lg:flex-row gap-6";
+      case LAYOUTS.STACKED:
+        return "flex flex-col gap-6";
+      case LAYOUTS.TABBED:
+        return "flex flex-col gap-6";
+      default:
+        return "flex flex-col lg:flex-row gap-6";
+    }
   };
 
   return (
-    <div className="mx-auto p-6 space-y-6 bg-gradient-to-b from-background to-background/80 container">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-2xl font-bold text-foreground">
-          Device ID: <span className="text-primary">{deviceId}</span> Live Feed
-        </h1>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            Last updated:{" "}
-            {lastUpdated ? convertTimestamp(lastUpdated.getTime()) : "Never"}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            aria-label={
-              autoRefresh ? "Disable auto-refresh" : "Enable auto-refresh"
-            }
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${autoRefresh ? "animate-spin" : ""}`}
-            />
-          </Button>
-        </div>
-      </div>
-
-      <AlertDialog open={tokenExpired} onOpenChange={setTokenExpired}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Session Expired</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your session has expired. Please log in again to continue.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => router.push("/login")}>
-              Login Again
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Card className="w-full mx-auto">
-        <CardHeader className="space-y-1 p-3 ">
-          <CardTitle className="text-lg">Device Search and Control</CardTitle>
+    <div className="container mx-auto p-6 space-y-6">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-2xl font-bold">
+            Device Search and Control
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Display Settings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Show Logo Detection</Label>
+                    <Switch
+                      checked={settings.showLogoTable}
+                      onCheckedChange={() => toggleTableVisibility("LogoTable")}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Show Audio Detection</Label>
+                    <Switch
+                      checked={settings.showAudioTable}
+                      onCheckedChange={() =>
+                        toggleTableVisibility("AudioTable")
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Show Member Watching</Label>
+                    <Switch
+                      checked={settings.showMemberWatching}
+                      onCheckedChange={() =>
+                        toggleTableVisibility("MemberWatching")
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Layout</Label>
+                    <Select
+                      value={settings.layout}
+                      onValueChange={(value) =>
+                        setSettings((prev) => ({ ...prev, layout: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={LAYOUTS.SIDE_BY_SIDE}>
+                          Side by Side
+                        </SelectItem>
+                        <SelectItem value={LAYOUTS.STACKED}>Stacked</SelectItem>
+                        <SelectItem value={LAYOUTS.TABBED}>Tabbed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Compact View</Label>
+                    <Switch
+                      checked={settings.compactView}
+                      onCheckedChange={(checked) =>
+                        setSettings((prev) => ({
+                          ...prev,
+                          compactView: checked,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(TIMEZONE_OFFSETS).map((tz) => (
+                  <SelectItem key={tz} value={tz}>
+                    {tz}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <div className="flex flex-col sm:flex-row items-center gap-4 pb-3">
-            <div className="relative flex-1 w-full bg-popover">
-              <Laptop className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Enter Device ID"
-                value={deviceId}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="pl-10 h-12 w-full"
-                ref={inputRef}
-              />
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-10 w-full bg-popover border mt-1 rounded-md shadow-lg">
-                  <ScrollArea className="h-48 w-full">
+        <CardContent>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="relative flex-1">
+                <Laptop className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Enter Device ID"
+                  value={deviceId}
+                  onChange={(e) => {
+                    const newValue = e.target.value
+                      .replace(/[^0-9]/g, "")
+                      .slice(0, 10);
+                    setDeviceId(newValue);
+                  }}
+                  className="pl-8"
+                  onFocus={() => setShowSuggestions(true)}
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <ScrollArea className="absolute z-10 w-full max-h-32 bg-popover border rounded-md shadow-md">
                     {suggestions.map((suggestion, index) => (
                       <div
                         key={index}
-                        className=" hover:bg-accent cursor-pointer flex justify-between items-center"
+                        className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer"
+                        onClick={() => {
+                          setDeviceId(suggestion);
+                          setShowSuggestions(false);
+                          handleSearch(suggestion);
+                        }}
                       >
-                        <span
-                          onClick={() =>
-                            router.push(`?deviceId=${suggestion}`)
-                          }
-                          className=" w-full px-4 py-2"
-                        >
-                          {suggestion}
-                        </span>
+                        <span>{suggestion}</span>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            removeSuggestion(suggestion);
+                            const newSuggestions = suggestions.filter(
+                              (s) => s !== suggestion
+                            );
+                            setSuggestions(newSuggestions);
+                            localStorage.setItem(
+                              "deviceSuggestions",
+                              JSON.stringify(newSuggestions)
+                            );
                           }}
-                          aria-label={`Remove ${suggestion} from suggestions`}
                         >
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
                   </ScrollArea>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                )}
+              </div>
               <Button
                 onClick={() => handleSearch()}
-                className="flex-1 h-12 bg-primary hover:bg-primary/90"
+                className="flex items-center gap-2"
               >
-                <Search className="mr-2 h-5 w-5" />
-                Search Device
+                <Search className="h-4 w-4" />
+                Search
               </Button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="auto-refresh"
+                    checked={autoRefresh}
+                    onCheckedChange={setAutoRefresh}
+                  />
+                  <Label htmlFor="auto-refresh">Auto-refresh</Label>
+                </div>
+                {autoRefresh && (
+                  <Select
+                    value={refreshInterval.toString()}
+                    onValueChange={(value) =>
+                      setRefreshInterval(parseInt(value))
+                    }
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Refresh interval</SelectLabel>
+                        <SelectItem value="5">5 seconds</SelectItem>
+                        <SelectItem value="10">10 seconds</SelectItem>
+                        <SelectItem value="30">30 seconds</SelectItem>
+                        <SelectItem value="60">1 minute</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
               <Button
                 variant="outline"
-                onClick={handleRefresh}
-                className="flex-1 h-12 border-2"
+                size="sm"
+                onClick={() => fetchData(deviceId)}
+                className="flex items-center gap-2"
               >
-                <RefreshCw className="mr-2 h-5 w-5" />
-                Refresh Data
+                <RefreshCcw className="h-4 w-4" />
+                Refresh
               </Button>
             </div>
-          </div>
-          <Separator />
-          <div className="pt-4">
-            <div className="flex items-center justify-between">
-              <Label
-                htmlFor="auto-refresh"
-                className="text-base font-medium cursor-pointer"
-              >
-                Auto-refresh
-              </Label>
-              <Switch
-                id="auto-refresh"
-                checked={autoRefresh}
-                onCheckedChange={setAutoRefresh}
-              />
-            </div>
-            {autoRefresh && (
-              <div className="flex items-center gap-3 mt-2">
-                <Label
-                  htmlFor="refresh-interval"
-                  className="text-sm whitespace-nowrap"
-                >
-                  Refresh every
-                </Label>
-                <Select
-                  value={refreshInterval.toString()}
-                  onValueChange={(value) => setRefreshInterval(parseInt(value))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="30 seconds" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Refresh Rates</SelectLabel>
-                      <SelectItem value="5">5 seconds</SelectItem>
-                      <SelectItem value="10">10 seconds</SelectItem>
-                      <SelectItem value="30">30 seconds</SelectItem>
-                      <SelectItem value="60">1 minute</SelectItem>
-                      <SelectItem value="300">5 minutes</SelectItem>
-                      <SelectItem value="600">10 minutes</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex gap-6">
-        {isLoading ? (
-          <>
-            <Skeleton className="h-[300px] " />
-            <Skeleton className="h-[300px]" />
-          </>
-        ) : (
-          <>
-              {!logoData && <LogoDetection
-                data={logoData}
-                convertTimestamp={convertTimestamp}
-              />}
-            <AudioDetection
+      {settings.layout === LAYOUTS.TABBED ? (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="logo" disabled={!settings.showLogoTable}>
+              Logo Detection
+            </TabsTrigger>
+            <TabsTrigger value="audio" disabled={!settings.showAudioTable}>
+              Audio Detection
+            </TabsTrigger>
+            <TabsTrigger value="member" disabled={!settings.showMemberWatching}>
+              Member Watching
+            </TabsTrigger>
+          </TabsList>
+          {settings.showLogoTable && activeTab === "logo" && (
+            <LogoDetectionTable
+              data={logoData}
+              convertTimestamp={convertTimestamp}
+              onExport={(selectedData) => handleExport("logo", selectedData)}
+              onPageChange={(page, limit) =>
+                fetchData(deviceId, page, limit, undefined, undefined)
+              }
+              compact={settings.compactView}
+            />
+          )}
+          {settings.showAudioTable && activeTab === "audio" && (
+            <AudioDetectionTable
               data={audioData}
               convertTimestamp={convertTimestamp}
+              onExport={(selectedData) => handleExport("audio", selectedData)}
+              onPageChange={(page, limit) =>
+                fetchData(deviceId, undefined, undefined, page, limit)
+              }
+              compact={settings.compactView}
             />
-          </>
-        )}
-      </div>
-
-      {/* {!isLoading && deviceId && memberGuestData && (
-        <MemberWatchingState memberGuestData={memberGuestData} />
-      )} */}
-
-      <EventsTable
-        eventData={eventData}
-        convertTimestamp={convertTimestamp}
-        totalRecords={totalRecords}
-        limit={limit}
-        currentPage={currentPage}
-        handlePageChange={handlePageChange}
-      />
+          )}
+          {settings.showMemberWatching &&
+            activeTab === "member" &&
+            memberGuestData && (
+              <MemberWatchingState memberGuestData={memberGuestData} />
+            )}
+        </Tabs>
+      ) : (
+        <div className={getLayoutClassName()}>
+          {settings.showLogoTable && (
+            <LogoDetectionTable
+              data={logoData}
+              convertTimestamp={convertTimestamp}
+              onExport={(selectedData) => handleExport("logo", selectedData)}
+              onPageChange={(page, limit) =>
+                fetchData(deviceId, page, limit, undefined, undefined)
+              }
+              compact={settings.compactView}
+            />
+          )}
+          {settings.showAudioTable && (
+            <AudioDetectionTable
+              data={audioData}
+              convertTimestamp={convertTimestamp}
+              onExport={(selectedData) => handleExport("audio", selectedData)}
+              onPageChange={(page, limit) =>
+                fetchData(deviceId, undefined, undefined, page, limit)
+              }
+              compact={settings.compactView}
+            />
+          )}
+          {settings.showMemberWatching && memberGuestData && (
+            <MemberWatchingState memberGuestData={memberGuestData} />
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -150,7 +150,7 @@ export default function Topbar() {
       </div>
 
       <div className="flex items-center space-x-3 md:space-x-4">
-        <Select value={timezone} onValueChange={setTimezone}>
+        {/* <Select value={timezone} onValueChange={setTimezone}>
           <SelectTrigger className="w-28 h-9">
             <SelectValue placeholder={timezone} />
           </SelectTrigger>
@@ -180,7 +180,7 @@ export default function Topbar() {
               </SelectItem>
             </SelectGroup>
           </SelectContent>
-        </Select>
+        </Select> */}
 
 
         <TooltipProvider>
