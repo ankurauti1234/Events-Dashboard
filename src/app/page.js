@@ -34,19 +34,19 @@ export default function DevicePage() {
   };
 
   return (
-    <>
+    <div className="bg-gradient-to-bl from-primary/15 via-background to-secondary/20 animate-gradient-x">
       <Topbar />
       <Suspense
-        fallback={
-          <div className="p-6 space-y-4">
-            <Skeleton className="h-[200px] w-full" />
-            <Skeleton className="h-[200px] w-full" />
-            <Skeleton className="h-[300px] w-full" />
-          </div>
-        }
+        // fallback={
+        //   <div className="p-6 space-y-4">
+        //     <Skeleton className="h-[200px] w-full" />
+        //     <Skeleton className="h-[200px] w-full" />
+        //     <Skeleton className="h-[300px] w-full" />
+        //   </div>
+        // }
       >
         <DevicePageContent />
       </Suspense>
-    </>
+    </div>
   );
 }

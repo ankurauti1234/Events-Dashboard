@@ -132,12 +132,6 @@ export function AudioDetectionTable({
                 device. New events will appear here once detected.
               </p>
             </div>
-            <Button
-              variant="outline"
-              className={compact ? "mt-2 text-sm" : "mt-4"}
-            >
-              Refresh Data
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -241,7 +235,7 @@ export function AudioDetectionTable({
                       <div
                         className={`relative ${
                           compact ? "w-6 h-6" : "w-10 h-10"
-                        } rounded-lg overflow-hidden border bg-muted`}
+                        } rounded-lg overflow-hidden border-2 bg-muted`}
                       >
                         <Image
                           src={`https://apm-logo-bucket.s3.ap-south-1.amazonaws.com/${item.Details.channel_id.trim()}.png`}

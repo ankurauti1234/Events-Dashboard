@@ -21,14 +21,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -36,7 +28,6 @@ import {
 } from "@/components/ui/tooltip";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import { useTimezoneStore } from "@/stores/timezoneStore";
 import { useThemeStore } from "@/stores/themeStore";
 import Image from "next/image";
 import { Separator } from "./ui/separator";
@@ -45,9 +36,10 @@ import { cn } from "@/lib/utils";
 export default function Topbar() {
   const { theme, setTheme } = useThemeStore();
   const [username, setUsername] = useState("");
-  const { timezone, setTimezone } = useTimezoneStore();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
   useEffect(() => {
     const name = Cookies.get("name");
@@ -86,6 +78,7 @@ export default function Topbar() {
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
     applyTheme(newTheme);
+    setIsThemeDropdownOpen(false);
   };
 
   const getThemeIcon = () => {
@@ -111,135 +104,100 @@ export default function Topbar() {
   return (
     <div
       className={cn(
-        "px-4 py-2 flex justify-between items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b border-border/40 transition-all duration-200",
+        "px-4 py-2 flex justify-between items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full transition-all duration-300 ease-in-out",
         {
-          "shadow-md rounded-full border-2": isScrolled,
-          "shadow-sm p-2": !isScrolled,
+          "shadow-lg rounded-lg border-2 border-border/40 scale-95":
+            isScrolled,
+          "shadow-sm border-b border-border/40 ": !isScrolled,
         }
       )}
     >
       <div className="flex items-center">
-        {/* <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="mr-2 lg:hidden hover:bg-accent"
-                onClick={toggleSidebar}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Toggle Menu</TooltipContent>
-          </Tooltip>
-        </TooltipProvider> */}
-
-        <div className="flex items-center gap-3 transition-transform hover:scale-[1.02]">
-          <Image
-            src="/images/inditronics_logo.svg"
-            height={36}
-            width={36}
-            alt="logo"
-            className="object-contain"
-          />
-          <h1 className="text-xl font-extrabold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="transform transition-transform duration-300 group-hover:scale-110">
+            <Image
+              src="/images/inditronics_logo.svg"
+              height={36}
+              width={36}
+              alt="logo"
+              className="object-contain"
+            />
+          </div>
+          <h1 className="text-xl font-extrabold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent transform transition-all duration-300 group-hover:tracking-wider">
             Inditronics
           </h1>
         </div>
       </div>
 
-      <div className="flex items-center space-x-3 md:space-x-4">
-        {/* <Select value={timezone} onValueChange={setTimezone}>
-          <SelectTrigger className="w-28 h-9">
-            <SelectValue placeholder={timezone} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="Indian Time">
-                <div className="flex flex-row items-center gap-2">
-                  <Image
-                    src="/images/india.svg"
-                    height={20}
-                    width={20}
-                    alt="India flag"
-                  />
-                  <span>IND</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="Russian Time">
-                <div className="flex flex-row items-center gap-2">
-                  <Image
-                    src="/images/russia.svg"
-                    height={20}
-                    width={20}
-                    alt="Russia flag"
-                  />
-                  <span>RUS</span>
-                </div>
-              </SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select> */}
-
-
+      <div className="flex items-center space-x-4">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <DropdownMenu>
+              <DropdownMenu
+                open={isThemeDropdownOpen}
+                onOpenChange={setIsThemeDropdownOpen}
+              >
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="transition-transform duration-200 hover:scale-110"
+                  >
                     {getThemeIcon()}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-40 animate-in slide-in-from-top-2 duration-200"
+                >
                   <DropdownMenuLabel>Appearance</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => changeTheme("light")}
-                    className="gap-2"
-                  >
-                    <Sun className="h-4 w-4" />
-                    <span>Light</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => changeTheme("dark")}
-                    className="gap-2"
-                  >
-                    <Moon className="h-4 w-4" />
-                    <span>Dark</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => changeTheme("system")}
-                    className="gap-2"
-                  >
-                    <Laptop className="h-4 w-4" />
-                    <span>System</span>
-                  </DropdownMenuItem>
+                  {[
+                    { icon: Sun, label: "Light", value: "light" },
+                    { icon: Moon, label: "Dark", value: "dark" },
+                    { icon: Laptop, label: "System", value: "system" },
+                  ].map(({ icon: Icon, label, value }) => (
+                    <DropdownMenuItem
+                      key={value}
+                      onClick={() => changeTheme(value)}
+                      className="gap-2 cursor-pointer transition-colors duration-200 hover:bg-primary/10"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </TooltipTrigger>
-            <TooltipContent>Theme</TooltipContent>
+            <TooltipContent
+              side="bottom"
+              className="animate-in zoom-in-50 duration-200"
+            >
+              Theme
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
-        <Separator orientation="vertical" className="h-8" />
+        <Separator orientation="vertical" className="h-8 opacity-50" />
 
-        <DropdownMenu>
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="p-1 h-9 hover:bg-accent rounded-full"
+              className="p-1 h-9 rounded-full transition-all duration-200 hover:bg-accent hover:scale-110"
             >
-              <Avatar className="h-7 w-7">
+              <Avatar className="h-7 w-7 ring-2 ring-primary/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-primary/40">
                 <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback className="text-sm">
+                <AvatarFallback className="text-sm font-semibold bg-primary/10">
                   {username ? username.charAt(0).toUpperCase() : "U"}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent
+            align="end"
+            className="w-56 animate-in slide-in-from-top-2 duration-200"
+          >
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{username}</p>
@@ -249,18 +207,22 @@ export default function Topbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
+            {[
+              { icon: User, label: "Profile" },
+              { icon: Settings, label: "Settings" },
+            ].map(({ icon: Icon, label }) => (
+              <DropdownMenuItem
+                key={label}
+                className="cursor-pointer transition-colors duration-200 hover:bg-primary/10"
+              >
+                <Icon className="mr-2 h-4 w-4" />
+                <span>{label}</span>
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleLogout}
-              className="text-red-500 focus:text-red-500"
+              className="text-red-500 cursor-pointer transition-colors duration-200 hover:bg-red-500/10 focus:text-red-500"
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>

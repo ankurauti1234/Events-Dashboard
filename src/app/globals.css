@@ -38,7 +38,7 @@ body {
       --destructive: 3 100% 50%;
       --destructive-foreground: 3 0% 100%;
       --ring: 229 100% 62%;
-      --radius: 0.75rem;
+      --radius: .5rem;
     }
   
     .dark {

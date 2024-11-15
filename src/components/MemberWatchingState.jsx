@@ -12,8 +12,8 @@ function MemberCard({ member, index, compact }) {
       className={cn(
         "w-full transition-all duration-300 hover:scale-102 group",
         isActive
-          ? "bg-popover hover:shadow-lg border-green-600 border-2"
-          : "bg-popover/80 border-secondary hover:shadow-md",
+          ? " hover:shadow-sm border-green-600 bg-green-600/15 border-2"
+          : "bg-secondary/25 border-secondary hover:shadow-md",
         compact ? "p-2" : "p-0"
       )}
     >
@@ -21,8 +21,7 @@ function MemberCard({ member, index, compact }) {
         <CardTitle
           className={cn(
             "flex justify-between items-center",
-            compact ? "text-base" : "text-lg",
-            
+            compact ? "text-base" : "text-lg"
           )}
         >
           <span className="flex items-center gap-2">
@@ -45,7 +44,7 @@ function MemberCard({ member, index, compact }) {
             className={cn(
               "transition-all",
               isActive
-                ? "animate-pulse bg-green-100 text-green-700"
+                ? "animate-pulse bg-green-800/75 text-green-100"
                 : "opacity-70",
               compact ? "text-xs" : "text-sm"
             )}
@@ -58,7 +57,7 @@ function MemberCard({ member, index, compact }) {
         className={cn("space-y-2", compact ? "p-2 pt-0" : "p-4 pt-0")}
       >
         <div className="flex flex-col space-y-2">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center bg-foreground/10 p-2 rounded-lg">
             <span
               className={cn("font-medium", compact ? "text-xs" : "text-sm")}
             >
@@ -73,7 +72,7 @@ function MemberCard({ member, index, compact }) {
               {gender === "m" ? "Male" : "Female"}
             </span>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center bg-foreground/10 p-2 rounded-lg">
             <span
               className={cn("font-medium", compact ? "text-xs" : "text-sm")}
             >
@@ -107,7 +106,7 @@ export default function MemberWatchingState({
   const activePercentage = (activeMembers / totalMembers) * 100;
 
   return (
-    <Card className="transition-all duration-300 hover:shadow-lg">
+    <Card className="transition-all duration-300 hover:shadow-sm">
       <CardHeader className={cn("border-b", compact ? "p-3" : "p-4")}>
         <CardTitle
           className={cn(

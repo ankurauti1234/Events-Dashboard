@@ -144,12 +144,6 @@ export function LogoDetectionTable({
                 captured.
               </p>
             </div>
-            <Button
-              variant="outline"
-              className={compact ? "mt-2 text-sm" : "mt-4"}
-            >
-              Refresh Data
-            </Button>
           </div>
         </CardContent>
       </Card>

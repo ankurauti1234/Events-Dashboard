@@ -69,6 +69,7 @@ export default function EnhancedDevicePageContent() {
   const [logoData, setLogoData] = useState({ events: [], total: 0 });
   const [audioData, setAudioData] = useState({ events: [], total: 0 });
   const [memberGuestData, setMemberGuestData] = useState(null);
+  const [shutDownData, setShutDownData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [autoRefresh, setAutoRefresh] = useState(false);
@@ -115,19 +116,25 @@ export default function EnhancedDevicePageContent() {
       setIsLoading(true);
       setError("");
       try {
-        const [logoResponse, audioResponse, memberGuestResponse] =
-          await Promise.all([
-            fetch(
-              `${API_URL}/events/${id}?type=29&page=${logoPage}&limit=${logoLimit}`
-            ),
-            fetch(
-              `${API_URL}/events/${id}?type=28&page=${audioPage}&limit=${audioLimit}`
-            ),
-            fetch(`${API_URL}/events/latest?deviceId=${id}&type=3`),
-          ]);
+        const [
+          logoResponse,
+          audioResponse,
+          memberGuestResponse,
+          shutDownResponse,
+        ] = await Promise.all([
+          fetch(
+            `${API_URL}/events/${id}?type=29&page=${logoPage}&limit=${logoLimit}`
+          ),
+          fetch(
+            `${API_URL}/events/${id}?type=28&page=${audioPage}&limit=${audioLimit}`
+          ),
+          fetch(`${API_URL}/events/latest?deviceId=${id}&type=3`),
+          fetch(`${API_URL}/events/latest?deviceId=${id}&type=69`),
+        ]);
         const logoResult = await logoResponse.json();
         const audioResult = await audioResponse.json();
         const memberGuestResult = await memberGuestResponse.json();
+        const shutDownResult = await shutDownResponse.json();
 
         setLogoData({
           events: logoResult.events || [],
@@ -140,6 +147,7 @@ export default function EnhancedDevicePageContent() {
         });
 
         setMemberGuestData(memberGuestResult.event?.Details || null);
+        setShutDownData(shutDownResult.event || null);
       } catch (error) {
         setError("Error fetching data");
       } finally {
@@ -270,127 +278,188 @@ export default function EnhancedDevicePageContent() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex flex-row-reverse">
-        <Card className="w-full max-w-lg mx-auto">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <BadgeInfo className="w-6 h-6 text-primary" />
-              Device Information
+    <div className="container mx-auto p-6 space-y-6 ">
+      <div
+        className={`grid grid-cols-1 lg:grid-cols-3 gap-6`}
+      >
+        {/* Left Panel - Device ID and Status */}
+        <Card className="lg:col-span-1  border-primary/20">
+          <CardHeader
+            className={`bg-primary/5 border-b ${settings.compactView ? "p-2" : "p-6"}`}
+          >
+            <CardTitle
+              className={`${
+                settings.compactView ? "text-lg" : "text-2xl"
+              } flex items-center gap-2`}
+            >
+              <BadgeInfo
+                className={`${settings.compactView ? "w-4 h-4" : "w-6 h-6"} text-primary`}
+              />
+              Device Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="bg-accent p-4 rounded-lg border ">
-              <div className="text-sm text-secondary-foreground mb-1">
-                Currently Searched Device ID
+          <CardContent
+            className={`${settings.compactView ? "p-2 space-y-2" : "p-6 space-y-6"}`}
+          >
+            <div
+              className={`bg-card ${
+                settings.compactView ? "p-3" : "p-6"
+              } rounded-xl border-2 border-primary/20 hover:border-primary/30 transition-all shadow-sm hover:shadow-md`}
+            >
+              <div className="text-sm font-medium text-muted-foreground mb-1">
+                Device ID
               </div>
-              <div className="text-3xl font-bold text-primary break-all">
-                {deviceId || "No device selected"}
+              <div
+                className={`${
+                  settings.compactView ? "text-2xl" : "text-4xl"
+                } font-bold text-primary break-all tracking-tight`}
+              >
+                {deviceId || "No device ID"}
               </div>
             </div>
+
+            {shutDownData && (
+              <div
+                className={`bg-muted/30 ${
+                  settings.compactView ? "p-2" : "p-4"
+                } rounded-lg border transition-all hover:bg-muted/40`}
+              >
+                <div className="text-sm font-medium text-muted-foreground">
+                  Last Shutdown
+                </div>
+                <div
+                  className={`${
+                    settings.compactView ? "text-lg" : "text-xl"
+                  } font-semibold`}
+                >
+                  {convertTimestamp(shutDownData.TS)}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="w-full">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-2xl font-bold">
-              Device Search and Control
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Display Settings</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Show Logo Detection</Label>
-                      <Switch
-                        checked={settings.showLogoTable}
-                        onCheckedChange={() =>
-                          toggleTableVisibility("LogoTable")
-                        }
+        {/* Right Panel - Search and Controls */}
+        <Card className="lg:col-span-2 ">
+          <CardHeader className={`border-b ${settings.compactView ? "p-3" : "p-6"}`}>
+            <div className="flex items-center justify-between">
+              <CardTitle
+                className={`${settings.compactView ? "text-lg" : "text-2xl"} font-bold`}
+              >
+                Search & Controls
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size={settings.compactView ? "sm" : "icon"}
+                      className={settings.compactView ? "h-7 w-7" : "h-9 w-9"}
+                    >
+                      <Settings
+                        className={`${settings.compactView ? "h-3 w-3" : "h-4 w-4"}`}
                       />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Display Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="space-y-4">
+                        {[
+                          { label: "Logo Detection", key: "showLogoTable" },
+                          { label: "Audio Detection", key: "showAudioTable" },
+                          {
+                            label: "Member Watching",
+                            key: "showMemberWatching",
+                          },
+                        ].map((item) => (
+                          <div
+                            key={item.key}
+                            className="flex items-center justify-between"
+                          >
+                            <Label className="font-medium">{item.label}</Label>
+                            <Switch
+                              checked={settings[item.key]}
+                              onCheckedChange={() =>
+                                toggleTableVisibility(item.key)
+                              }
+                            />
+                          </div>
+                        ))}
+                        <div className="space-y-2">
+                          <Label className="font-medium">Layout</Label>
+                          <Select
+                            value={settings.layout}
+                            onValueChange={(value) =>
+                              setSettings((prev) => ({
+                                ...prev,
+                                layout: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(LAYOUTS).map(([key, value]) => (
+                                <SelectItem key={key} value={value}>
+                                  {key.replace("_", " ").toLowerCase()}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <Label className="font-medium">Compact View</Label>
+                          <Switch
+                            checked={settings.compactView}
+                            onCheckedChange={(checked) =>
+                              setSettings((prev) => ({
+                                ...prev,
+                                compactView: checked,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <Label>Show Audio Detection</Label>
-                      <Switch
-                        checked={settings.showAudioTable}
-                        onCheckedChange={() =>
-                          toggleTableVisibility("AudioTable")
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label>Show Member Watching</Label>
-                      <Switch
-                        checked={settings.showMemberWatching}
-                        onCheckedChange={() =>
-                          toggleTableVisibility("MemberWatching")
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Layout</Label>
-                      <Select
-                        value={settings.layout}
-                        onValueChange={(value) =>
-                          setSettings((prev) => ({ ...prev, layout: value }))
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={LAYOUTS.SIDE_BY_SIDE}>
-                            Side by Side
-                          </SelectItem>
-                          <SelectItem value={LAYOUTS.STACKED}>
-                            Stacked
-                          </SelectItem>
-                          <SelectItem value={LAYOUTS.TABBED}>Tabbed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label>Compact View</Label>
-                      <Switch
-                        checked={settings.compactView}
-                        onCheckedChange={(checked) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            compactView: checked,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <Select value={timezone} onValueChange={setTimezone}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.keys(TIMEZONE_OFFSETS).map((tz) => (
-                    <SelectItem key={tz} value={tz}>
-                      {tz}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  </DialogContent>
+                </Dialog>
+
+                <Select value={timezone} onValueChange={setTimezone}>
+                  <SelectTrigger
+                    className={`${
+                      settings.compactView ? "w-[120px] h-8 text-sm" : "w-[140px]"
+                    }`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(TIMEZONE_OFFSETS).map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center space-x-2">
+
+          <CardContent
+            className={`${settings.compactView ? "p-3 space-y-3" : "p-6 space-y-6"}`}
+          >
+            {/* Search Section */}
+            <div className="relative">
+              <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Laptop className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Laptop
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 ${
+                      settings.compactView ? "h-3 w-3" : "h-4 w-4"
+                    } text-muted-foreground`}
+                  />
                   <Input
                     type="text"
                     placeholder="Enter Device ID"
@@ -401,38 +470,38 @@ export default function EnhancedDevicePageContent() {
                         .slice(0, 10);
                       setDeviceId(newValue);
                     }}
-                    className="pl-8"
+                    className={`${settings.compactView ? "h-8 text-sm pl-8" : "pl-10"}`}
                     onFocus={() => setShowSuggestions(true)}
                   />
                   {showSuggestions && suggestions.length > 0 && (
-                    <ScrollArea className="absolute z-10 w-full max-h-32 bg-popover border rounded-md shadow-md">
+                    <ScrollArea className="absolute z-50 w-full max-h-48 mt-1 bg-popover border rounded-md ">
                       {suggestions.map((suggestion, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer"
+                          className={`flex items-center justify-between ${
+                            settings.compactView ? "p-2 text-sm" : "p-3"
+                          } hover:bg-accent cursor-pointer`}
                           onClick={() => {
                             setDeviceId(suggestion);
                             setShowSuggestions(false);
                             handleSearch(suggestion);
                           }}
                         >
-                          <span>{suggestion}</span>
+                          <span className="font-medium">{suggestion}</span>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size={settings.compactView ? "xs" : "sm"}
+                            className={settings.compactView ? "h-6 w-6" : "h-8 w-8"}
                             onClick={(e) => {
                               e.stopPropagation();
-                              const newSuggestions = suggestions.filter(
-                                (s) => s !== suggestion
-                              );
-                              setSuggestions(newSuggestions);
-                              localStorage.setItem(
-                                "deviceSuggestions",
-                                JSON.stringify(newSuggestions)
+                              setSuggestions(
+                                suggestions.filter((s) => s !== suggestion)
                               );
                             }}
                           >
-                            <X className="h-4 w-4" />
+                            <X
+                              className={`${settings.compactView ? "h-3 w-3" : "h-4 w-4"}`}
+                            />
                           </Button>
                         </div>
                       ))}
@@ -441,55 +510,73 @@ export default function EnhancedDevicePageContent() {
                 </div>
                 <Button
                   onClick={() => handleSearch()}
-                  className="flex items-center gap-2"
+                  className="gap-2"
+                  size={settings.compactView ? "sm" : "default"}
                 >
-                  <Search className="h-4 w-4" />
+                  <Search className={`${settings.compactView ? "h-3 w-3" : "h-4 w-4"}`} />
                   Search
                 </Button>
               </div>
+            </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="auto-refresh"
-                      checked={autoRefresh}
-                      onCheckedChange={setAutoRefresh}
-                    />
-                    <Label htmlFor="auto-refresh">Auto-refresh</Label>
-                  </div>
-                  {autoRefresh && (
-                    <Select
-                      value={refreshInterval.toString()}
-                      onValueChange={(value) =>
-                        setRefreshInterval(parseInt(value))
-                      }
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Refresh interval</SelectLabel>
-                          <SelectItem value="5">5 seconds</SelectItem>
-                          <SelectItem value="10">10 seconds</SelectItem>
-                          <SelectItem value="30">30 seconds</SelectItem>
-                          <SelectItem value="60">1 minute</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
+            {/* Controls Section */}
+            <div
+              className={`flex flex-wrap items-center justify-between gap-4 ${
+                settings.compactView ? "p-2" : "p-4"
+              } bg-muted/30 rounded-lg`}
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="auto-refresh"
+                    checked={autoRefresh}
+                    onCheckedChange={setAutoRefresh}
+                  />
+                  <Label
+                    htmlFor="auto-refresh"
+                    className={`font-medium ${settings.compactView ? "text-sm" : ""}`}
+                  >
+                    Auto-refresh
+                  </Label>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchData(deviceId)}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCcw className="h-4 w-4" />
-                  Refresh
-                </Button>
+                {autoRefresh && (
+                  <Select
+                    value={refreshInterval.toString()}
+                    onValueChange={(value) =>
+                      setRefreshInterval(parseInt(value))
+                    }
+                  >
+                    <SelectTrigger
+                      className={`${
+                        settings.compactView ? "w-[120px] h-8 text-sm" : "w-[140px]"
+                      }`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Refresh interval</SelectLabel>
+                        {[5, 10, 30, 60].map((seconds) => (
+                          <SelectItem key={seconds} value={seconds.toString()}>
+                            {seconds < 60 ? `${seconds} seconds` : "1 minute"}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
+              <Button
+                variant="outline"
+                size={settings.compactView ? "sm" : "default"}
+                onClick={() => fetchData(deviceId)}
+                className="gap-2"
+              >
+                <RefreshCcw
+                  className={`${settings.compactView ? "h-3 w-3" : "h-4 w-4"}`}
+                />
+                Refresh Now
+              </Button>
             </div>
           </CardContent>
         </Card>
