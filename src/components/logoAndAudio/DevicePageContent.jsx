@@ -279,13 +279,13 @@ export default function EnhancedDevicePageContent() {
 
   return (
     <div className="container mx-auto p-6 space-y-6 ">
-      <div
-        className={`grid grid-cols-1 lg:grid-cols-3 gap-6`}
-      >
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6`}>
         {/* Left Panel - Device ID and Status */}
         <Card className="lg:col-span-1  border-primary/20">
           <CardHeader
-            className={`bg-primary/5 border-b ${settings.compactView ? "p-2" : "p-6"}`}
+            className={`bg-primary/5 border-b ${
+              settings.compactView ? "p-2" : "p-6"
+            }`}
           >
             <CardTitle
               className={`${
@@ -293,18 +293,22 @@ export default function EnhancedDevicePageContent() {
               } flex items-center gap-2`}
             >
               <BadgeInfo
-                className={`${settings.compactView ? "w-4 h-4" : "w-6 h-6"} text-primary`}
+                className={`${
+                  settings.compactView ? "w-4 h-4" : "w-6 h-6"
+                } text-primary`}
               />
               Device Status
             </CardTitle>
           </CardHeader>
           <CardContent
-            className={`${settings.compactView ? "p-2 space-y-2" : "p-6 space-y-6"}`}
+            className={`${
+              settings.compactView ? "p-2 space-y-2" : "p-6 space-y-6"
+            }`}
           >
             <div
               className={`bg-card ${
                 settings.compactView ? "p-3" : "p-6"
-              } rounded-xl border-2 border-primary/20 hover:border-primary/30 transition-all shadow-sm hover:shadow-md`}
+              } rounded-lg border-2 border-primary/20 hover:border-primary/30 transition-all shadow-sm hover:shadow-md`}
             >
               <div className="text-sm font-medium text-muted-foreground mb-1">
                 Device ID
@@ -341,10 +345,14 @@ export default function EnhancedDevicePageContent() {
 
         {/* Right Panel - Search and Controls */}
         <Card className="lg:col-span-2 ">
-          <CardHeader className={`border-b ${settings.compactView ? "p-3" : "p-6"}`}>
+          <CardHeader
+            className={`border-b ${settings.compactView ? "p-3" : "p-6"}`}
+          >
             <div className="flex items-center justify-between">
               <CardTitle
-                className={`${settings.compactView ? "text-lg" : "text-2xl"} font-bold`}
+                className={`${
+                  settings.compactView ? "text-lg" : "text-2xl"
+                } font-bold`}
               >
                 Search & Controls
               </CardTitle>
@@ -357,7 +365,9 @@ export default function EnhancedDevicePageContent() {
                       className={settings.compactView ? "h-7 w-7" : "h-9 w-9"}
                     >
                       <Settings
-                        className={`${settings.compactView ? "h-3 w-3" : "h-4 w-4"}`}
+                        className={`${
+                          settings.compactView ? "h-3 w-3" : "h-4 w-4"
+                        }`}
                       />
                     </Button>
                   </DialogTrigger>
@@ -431,7 +441,9 @@ export default function EnhancedDevicePageContent() {
                 <Select value={timezone} onValueChange={setTimezone}>
                   <SelectTrigger
                     className={`${
-                      settings.compactView ? "w-[120px] h-8 text-sm" : "w-[140px]"
+                      settings.compactView
+                        ? "w-[120px] h-8 text-sm"
+                        : "w-[140px]"
                     }`}
                   >
                     <SelectValue />
@@ -449,7 +461,9 @@ export default function EnhancedDevicePageContent() {
           </CardHeader>
 
           <CardContent
-            className={`${settings.compactView ? "p-3 space-y-3" : "p-6 space-y-6"}`}
+            className={`${
+              settings.compactView ? "p-3 space-y-3" : "p-6 space-y-6"
+            }`}
           >
             {/* Search Section */}
             <div className="relative">
@@ -470,7 +484,9 @@ export default function EnhancedDevicePageContent() {
                         .slice(0, 10);
                       setDeviceId(newValue);
                     }}
-                    className={`${settings.compactView ? "h-8 text-sm pl-8" : "pl-10"}`}
+                    className={`${
+                      settings.compactView ? "h-8 text-sm pl-8" : "pl-10"
+                    }`}
                     onFocus={() => setShowSuggestions(true)}
                   />
                   {showSuggestions && suggestions.length > 0 && (
@@ -491,7 +507,9 @@ export default function EnhancedDevicePageContent() {
                           <Button
                             variant="ghost"
                             size={settings.compactView ? "xs" : "sm"}
-                            className={settings.compactView ? "h-6 w-6" : "h-8 w-8"}
+                            className={
+                              settings.compactView ? "h-6 w-6" : "h-8 w-8"
+                            }
                             onClick={(e) => {
                               e.stopPropagation();
                               setSuggestions(
@@ -500,7 +518,9 @@ export default function EnhancedDevicePageContent() {
                             }}
                           >
                             <X
-                              className={`${settings.compactView ? "h-3 w-3" : "h-4 w-4"}`}
+                              className={`${
+                                settings.compactView ? "h-3 w-3" : "h-4 w-4"
+                              }`}
                             />
                           </Button>
                         </div>
@@ -513,7 +533,11 @@ export default function EnhancedDevicePageContent() {
                   className="gap-2"
                   size={settings.compactView ? "sm" : "default"}
                 >
-                  <Search className={`${settings.compactView ? "h-3 w-3" : "h-4 w-4"}`} />
+                  <Search
+                    className={`${
+                      settings.compactView ? "h-3 w-3" : "h-4 w-4"
+                    }`}
+                  />
                   Search
                 </Button>
               </div>
@@ -534,7 +558,9 @@ export default function EnhancedDevicePageContent() {
                   />
                   <Label
                     htmlFor="auto-refresh"
-                    className={`font-medium ${settings.compactView ? "text-sm" : ""}`}
+                    className={`font-medium ${
+                      settings.compactView ? "text-sm" : ""
+                    }`}
                   >
                     Auto-refresh
                   </Label>
@@ -548,7 +574,9 @@ export default function EnhancedDevicePageContent() {
                   >
                     <SelectTrigger
                       className={`${
-                        settings.compactView ? "w-[120px] h-8 text-sm" : "w-[140px]"
+                        settings.compactView
+                          ? "w-[120px] h-8 text-sm"
+                          : "w-[140px]"
                       }`}
                     >
                       <SelectValue />

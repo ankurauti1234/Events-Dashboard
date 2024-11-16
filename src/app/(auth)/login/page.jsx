@@ -74,7 +74,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-primary/20 via-background to-secondary/20 animate-gradient-x">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 ">
       <Toaster position="top-center" />
       <div className="w-full max-w-md perspective-1000">
         <Card

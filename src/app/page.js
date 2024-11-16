@@ -5,8 +5,9 @@ import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Topbar from "@/components/Topbar";
 import { Skeleton } from "@/components/ui/skeleton";
-import DevicePageContent from "@/components/DevicePageContent";
+import DevicePageContent from "@/components/logoAndAudio/DevicePageContent";
 import Cookies from "js-cookie";
+import DeviceEventsPage from "@/components/Events/DeviceEventsPage";
 
 export default function DevicePage() {
   const router = useRouter();
@@ -34,19 +35,18 @@ export default function DevicePage() {
   };
 
   return (
-    <div className="bg-gradient-to-bl from-primary/15 via-background to-secondary/20 animate-gradient-x">
+    <>
       <Topbar />
+
       <Suspense
-        // fallback={
-        //   <div className="p-6 space-y-4">
-        //     <Skeleton className="h-[200px] w-full" />
-        //     <Skeleton className="h-[200px] w-full" />
-        //     <Skeleton className="h-[300px] w-full" />
-        //   </div>
-        // }
+        fallback={
+          <div className="p-6 space-y-4">
+            <Skeleton className="h-[200px] w-full" />
+          </div>
+        }
       >
-        <DevicePageContent />
+        <DeviceEventsPage />
       </Suspense>
-    </div>
+    </>
   );
 }
