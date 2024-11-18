@@ -8,6 +8,7 @@ import {
   RefreshCcw,
   BadgeInfo,
   Calendar,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const TIMEZONE_OFFSETS = {
   "Russian Time": 3,
@@ -59,12 +61,13 @@ export function DeviceManagement({
 }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [dateError, setDateError] = useState("");
   const suggestionsRef = useRef(null);
 
   useEffect(() => {
     const savedSuggestions = JSON.parse(
       localStorage.getItem("deviceSuggestions") || "[]"
-    );
+    ).slice(0, 5); // Limit to 5 suggestions
     setSuggestions(savedSuggestions);
   }, []);
 
@@ -89,10 +92,11 @@ export function DeviceManagement({
       const start = new Date(startDate);
       const end = new Date(endDate);
       if (start > end) {
-        alert("Start date cannot be after end date");
+        setDateError("Start date cannot be after end date");
         return false;
       }
     }
+    setDateError("");
     return true;
   };
 
@@ -101,6 +105,10 @@ export function DeviceManagement({
       handleDateSearch();
     }
   };
+
+  const showDateFilterButtons = startDate || endDate;
+  const shouldShowSuggestions =
+    showSuggestions && deviceId && suggestions.length > 0;
 
   return (
     <Card className="border-2">
@@ -141,7 +149,7 @@ export function DeviceManagement({
                 className="pl-9 h-9"
                 onFocus={() => setShowSuggestions(true)}
               />
-              {showSuggestions && suggestions.length > 0 && (
+              {shouldShowSuggestions && (
                 <ScrollArea className="absolute z-50 w-full max-h-40 mt-1 bg-popover border rounded-md shadow-lg">
                   {suggestions.map((suggestion, index) => (
                     <div
@@ -190,49 +198,72 @@ export function DeviceManagement({
           )}
         </div>
 
-        <div className="flex gap-3 items-end">
-          <div>
-            <Label
-              htmlFor="start-date"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Start Date
-            </Label>
-            <Input
-              type="date"
-              id="start-date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-[240px]"
-            />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Label
+                htmlFor="start-date"
+                className="flex items-center gap-2 text-sm font-medium mb-2"
+              >
+                <Calendar className="h-4 w-4" />
+                Start Date
+              </Label>
+              <Input
+                type="date"
+                id="start-date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setDateError("");
+                }}
+                className="w-full"
+              />
+            </div>
+            <ArrowRight className="h-4 w-4 mt-8 text-muted-foreground" />
+            <div className="flex-1">
+              <Label
+                htmlFor="end-date"
+                className="flex items-center gap-2 text-sm font-medium mb-2"
+              >
+                <Calendar className="h-4 w-4" />
+                End Date
+              </Label>
+              <Input
+                type="date"
+                id="end-date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setDateError("");
+                }}
+                className="w-full"
+              />
+            </div>
+            {showDateFilterButtons && (
+              <div className="flex flex-col gap-2 mt-6">
+                <Button onClick={handleDateSearchClick} className="gap-1.5">
+                  <Search className="h-4 w-4" />
+                  Apply Filter
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearDateFilter();
+                    setDateError("");
+                  }}
+                  className="gap-1.5"
+                >
+                  <X className="h-4 w-4" />
+                  Clear
+                </Button>
+              </div>
+            )}
           </div>
-          <div>
-            <Label
-              htmlFor="end-date"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              End Date
-            </Label>
-            <Input
-              type="date"
-              id="end-date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-[240px]"
-            />
-          </div>
-          <Button onClick={handleDateSearch} className="gap-1.5">
-            <Search className="h-4 w-4" />
-            Apply Date Filter
-          </Button>
-          <Button
-            variant="outline"
-            onClick={clearDateFilter}
-            className="gap-1.5"
-          >
-            <X className="h-4 w-4" />
-            Clear Date Filter
-          </Button>
+          {dateError && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertDescription>{dateError}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <div className="flex gap-3">

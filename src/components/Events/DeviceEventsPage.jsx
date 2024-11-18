@@ -27,11 +27,11 @@ export default function DeviceEventsPage() {
   const [shutDownData, setShutDownData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(30);
-  const [timezone, setTimezone] = useState("Indian Time");
+  const [timezone, setTimezone] = useState("Russian Time");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState(new Set());
   const [selectedEventType, setSelectedEventType] = useState("all");
@@ -143,12 +143,12 @@ export default function DeviceEventsPage() {
 
   const handleSearch = useCallback(
     (id = deviceId, start = startDate, end = endDate) => {
-      const queryParams = new URLSearchParams();
-      if (id) queryParams.set("deviceId", id);
+      // const queryParams = new URLSearchParams();
+      // if (id) queryParams.set("deviceId", id);
       // if (start) queryParams.set("startDate", start);
       // if (end) queryParams.set("endDate", end);
 
-      router.push(`?${queryParams.toString()}`);
+      // router.push(`?${queryParams.toString()}`);
       setCurrentPage(1);
       setEventData({ events: [], total: 0 }); // Reset before new search
       fetchData(id, 1, start, end);
@@ -230,12 +230,7 @@ export default function DeviceEventsPage() {
       <PageSection
         className="mb-12"
         title="Performance Analytics"
-        description="Real-time performance metrics and analytics dashboard showing device activity, uptime statistics, and system health indicators"
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Devices", href: "/devices" },
-          { label: "Analytics" },
-        ]}
+        description="Real-time performance metrics and analytics dashboard showing device activity, uptime statistics, and system health indicators, Refreshes every 10-minutes"
         badge="live metrics"
         actions={
           <div className="flex gap-2">
@@ -258,13 +253,8 @@ export default function DeviceEventsPage() {
       </PageSection>
 
       <PageSection
-        title="Event Management Console"
+        title="Event   Management"
         description="Comprehensive event tracking system with advanced filtering, search capabilities, and batch operations for device events"
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Devices", href: "/devices" },
-          { label: "Events" },
-        ]}
         badge="all events"
         actions={
           <div className="flex gap-2">

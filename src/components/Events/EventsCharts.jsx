@@ -35,10 +35,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Switch } from "@/components/ui/switch";
+import { Label as UILabel } from "@/components/ui/label";
 import NumberTicker from "../ui/number-ticker";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://apmapis.webdevava.live/api";
+
+const AUTO_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 const eventTypeColors = {
   MEMBER_GUEST_DECLARATION: "hsl(var(--chart-1))",
@@ -54,6 +58,8 @@ export default function EventsCharts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
 
   const fetchData = useCallback(async () => {
     try {
@@ -75,6 +81,7 @@ export default function EventsCharts() {
       setLogoDetectionData(logoDetectionResult);
       setMetricsData(metricsResult);
       setError(null);
+      setLastRefreshTime(new Date());
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Error fetching data");
@@ -84,13 +91,30 @@ export default function EventsCharts() {
     }
   }, []);
 
+  // Initial data fetch
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  // Auto refresh setup
+  useEffect(() => {
+    let intervalId;
+
+    if (autoRefresh) {
+      intervalId = setInterval(() => {
+        fetchData();
+      }, AUTO_REFRESH_INTERVAL);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [autoRefresh, fetchData]);
+
   // Expose the refresh function to parent
   useEffect(() => {
-    // Add the refresh function to the window object so it can be called from the parent
     window.refreshChartsData = fetchData;
     return () => {
       delete window.refreshChartsData;
@@ -126,7 +150,6 @@ export default function EventsCharts() {
     }));
   }, [logoDetectionData]);
 
-  // Get the most active channel data
   const mostActiveChannel = useMemo(() => {
     if (!logoDetectionData?.statistics?.channels) return null;
     return logoDetectionData.statistics.channels.reduce((prev, current) =>
@@ -155,9 +178,6 @@ export default function EventsCharts() {
       color: "hsl(var(--background))",
     },
   };
-
-
-
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
