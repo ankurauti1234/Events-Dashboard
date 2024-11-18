@@ -93,7 +93,7 @@ export default function Login() {
                 className="drop-shadow-lg transition-transform duration-300 group-hover:scale-105"
               />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent pb-1">
+            <CardTitle className="text-3xl font-bold  text-primary pb-1">
               Inditronics
             </CardTitle>
             <CardDescription className="text-center text-muted-foreground/80 text-sm">
