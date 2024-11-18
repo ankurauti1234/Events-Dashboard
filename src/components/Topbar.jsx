@@ -104,11 +104,11 @@ export default function Topbar() {
   return (
     <div
       className={cn(
-        "px-4 py-2 flex justify-between items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full transition-all duration-300 ease-in-out",
+        "px-4 py-2 flex justify-between items-center  sticky top-0 z-50 w-full transition-all duration-300 ease-in-out",
         {
-          "shadow-lg rounded-lg border-2 border-border/40 scale-95":
+          "shadow-lg bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b":
             isScrolled,
-          "shadow-sm border-b border-border/40 ": !isScrolled,
+          "shadow-none border-b-0 bg-transparent  ": !isScrolled,
         }
       )}
     >
@@ -186,9 +186,9 @@ export default function Topbar() {
               variant="ghost"
               className="p-1 h-9 rounded-full transition-all duration-200 hover:bg-accent hover:scale-110"
             >
-              <Avatar className="h-7 w-7 ring-2 ring-primary/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-primary/40">
-                <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback className="text-sm font-semibold bg-primary/10">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-primary/40 rounded-lg">
+                <AvatarImage src="/user.png" />
+                <AvatarFallback className="text-sm font-semibold bg-primary/10 rounded-lg">
                   {username ? username.charAt(0).toUpperCase() : "U"}
                 </AvatarFallback>
               </Avatar>
