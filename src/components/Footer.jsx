@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="border-t border-border mt-12 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto py-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
-          <p>© 2024 Made by Inditronics</p>
+          <p>©2024 Made by Inditronics</p>
 
           <div className="flex items-center gap-4">
             <a
@@ -14,7 +14,7 @@ const Footer = () => {
               className="flex items-center gap-1 hover:text-foreground transition-colors"
             >
               <Mail className="w-4 h-4" />
-              contact@inditronics.com
+              kunal.jagdale@inditronics.com
             </a>
 
             <a
@@ -22,7 +22,7 @@ const Footer = () => {
               className="flex items-center gap-1 hover:text-foreground transition-colors"
             >
               <Phone className="w-4 h-4" />
-              +91 123 456 7890
+              +91 917 598 6900
             </a>
           </div>
         </div>
