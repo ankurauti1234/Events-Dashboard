@@ -225,6 +225,81 @@ export default function DeviceEventsPage() {
     endDate,
   ]);
 
+
+    const escapeCsvValue = (value) => {
+      if (value === null || value === undefined) return "";
+      const stringValue = String(value);
+      // If the value contains commas, quotes, or newlines, wrap it in quotes and escape existing quotes
+      if (
+        stringValue.includes(",") ||
+        stringValue.includes('"') ||
+        stringValue.includes("\n")
+      ) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
+
+    const exportSelectedEvents = () => {
+      const selectedEventsData = eventData.events.filter((event) =>
+        selectedEvents.has(event._id)
+      );
+
+      const csvRows = [["Device ID", "Timestamp", "Event Type", "Details"]];
+
+      selectedEventsData.forEach((event) => {
+        const details =
+          typeof event.Details === "object"
+            ? JSON.stringify(event.Details)
+            : event.Details;
+
+        csvRows.push([
+          escapeCsvValue(event.DEVICE_ID),
+          escapeCsvValue(convertTimestamp(event.TS)),
+          escapeCsvValue(event.Event_Name),
+          escapeCsvValue(details),
+        ]);
+      });
+
+      const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      link.href = url;
+      link.setAttribute("download", `device-events-${timestamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    };
+
+    useEffect(() => {
+      const urlDeviceId = searchParams.get("deviceId");
+      if (urlDeviceId) {
+        setDeviceId(urlDeviceId);
+        fetchData(urlDeviceId, currentPage);
+      } else {
+        // Fetch all events when no device ID is present
+        fetchData("", currentPage);
+      }
+      const savedSuggestions = JSON.parse(
+        localStorage.getItem("deviceSuggestions") || "[]"
+      );
+    }, [searchParams, fetchData, currentPage]);
+
+    useEffect(() => {
+      let intervalId;
+      if (autoRefresh) {
+        intervalId = setInterval(() => {
+          fetchData(deviceId, currentPage);
+        }, refreshInterval * 1000);
+      }
+      return () => clearInterval(intervalId);
+    }, [autoRefresh, refreshInterval, deviceId, fetchData, currentPage]);
+
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <PageSection
@@ -308,6 +383,7 @@ export default function DeviceEventsPage() {
             currentPage={currentPage}
             handlePageChange={handlePageChange}
             convertTimestamp={convertTimestamp}
+            exportSelectedEvents={exportSelectedEvents}
           />
         </main>
       </PageSection>
