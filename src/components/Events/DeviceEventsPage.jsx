@@ -8,7 +8,8 @@ import { StatsSection } from "./StatsSection";
 import EventsCharts from "./EventsCharts";
 import PageSection from "../PageSection";
 import { Badge } from "../ui/badge";
-import { Activity, ArrowUpDown, CalendarRange } from "lucide-react";
+import { Activity, ArrowUpDown, CalendarRange, RefreshCcw } from "lucide-react";
+import { Button } from "../ui/button";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://apmapis.webdevava.live/api";
@@ -144,8 +145,8 @@ export default function DeviceEventsPage() {
     (id = deviceId, start = startDate, end = endDate) => {
       const queryParams = new URLSearchParams();
       if (id) queryParams.set("deviceId", id);
-      if (start) queryParams.set("startDate", start);
-      if (end) queryParams.set("endDate", end);
+      // if (start) queryParams.set("startDate", start);
+      // if (end) queryParams.set("endDate", end);
 
       router.push(`?${queryParams.toString()}`);
       setCurrentPage(1);
@@ -184,6 +185,13 @@ export default function DeviceEventsPage() {
   const onRefresh = () => {
     fetchData(deviceId, currentPage, startDate, endDate);
   };
+
+    const handleChartsRefresh = () => {
+      // Call the refresh function exposed by EventsCharts
+      if (window.refreshChartsData) {
+        window.refreshChartsData();
+      }
+    };
 
   useEffect(() => {
     const urlDeviceId = searchParams.get("deviceId");
@@ -235,6 +243,14 @@ export default function DeviceEventsPage() {
               <Activity className="w-3 h-3" />
               Real-time
             </Badge>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleChartsRefresh}
+              className="h-8 w-8"
+            >
+              <RefreshCcw className="h-4 w-4" />
+            </Button>
           </div>
         }
       >

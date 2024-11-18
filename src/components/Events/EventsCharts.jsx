@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { TrendingUp, Activity, Cpu, MonitorDot } from "lucide-react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import {
+  TrendingUp,
+  Activity,
+  Cpu,
+  MonitorDot,
+  RefreshCcw,
+} from "lucide-react";
 import {
   Pie,
   PieChart,
@@ -22,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   ChartConfig,
   ChartContainer,
@@ -41,40 +48,54 @@ const eventTypeColors = {
   SHUT_DOWN: "hsl(var(--chart-5))",
 };
 
-export default function EventAnalyticsDashboard() {
+export default function EventsCharts() {
   const [logoDetectionData, setLogoDetectionData] = useState(null);
   const [metricsData, setMetricsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      const [logoDetectionResponse, metricsResponse] = await Promise.all([
+        fetch(`${API_URL}/events/logo-detection?deviceIdRange=200000-200010`),
+        fetch(
+          `${API_URL}/events/metrics?types=3,28,29,68,69&deviceIdRange=200000-200010`
+        ),
+      ]);
+
+      if (!logoDetectionResponse.ok || !metricsResponse.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const logoDetectionResult = await logoDetectionResponse.json();
+      const metricsResult = await metricsResponse.json();
+
+      setLogoDetectionData(logoDetectionResult);
+      setMetricsData(metricsResult);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Error fetching data");
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [logoDetectionResponse, metricsResponse] = await Promise.all([
-          fetch(`${API_URL}/events/logo-detection?deviceIdRange=200000-200010`),
-          fetch(
-            `${API_URL}/events/metrics?types=3,28,29,68,69&deviceIdRange=200000-200010`
-          ),
-        ]);
-
-        if (!logoDetectionResponse.ok || !metricsResponse.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const logoDetectionResult = await logoDetectionResponse.json();
-        const metricsResult = await metricsResponse.json();
-
-        setLogoDetectionData(logoDetectionResult);
-        setMetricsData(metricsResult);
-      } catch (error) {
-        setError("Error fetching data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, []);
+  }, [fetchData]);
+
+  // Expose the refresh function to parent
+  useEffect(() => {
+    // Add the refresh function to the window object so it can be called from the parent
+    window.refreshChartsData = fetchData;
+    return () => {
+      delete window.refreshChartsData;
+    };
+  }, [fetchData]);
 
   const eventDistributionData = useMemo(() => {
     if (!metricsData) return [];
@@ -89,21 +110,21 @@ export default function EventAnalyticsDashboard() {
     return eventDistributionData.reduce((acc, curr) => acc + curr.value, 0);
   }, [eventDistributionData]);
 
-const detectionTypeData = useMemo(() => {
-  if (!logoDetectionData) return [];
-  const colors = [
-    "hsl(var(--chart-1))",
-    "hsl(var(--chart-2))",
-    "hsl(var(--chart-3))",
-    "hsl(var(--chart-4))",
-    "hsl(var(--chart-5))",
-  ];
-  return logoDetectionData.statistics.detectionTypes.map((item, index) => ({
-    name: item.type,
-    value: item.count,
-    fill: colors[index % colors.length],
-  }));
-}, [logoDetectionData]);
+  const detectionTypeData = useMemo(() => {
+    if (!logoDetectionData) return [];
+    const colors = [
+      "hsl(var(--chart-1))",
+      "hsl(var(--chart-2))",
+      "hsl(var(--chart-3))",
+      "hsl(var(--chart-4))",
+      "hsl(var(--chart-5))",
+    ];
+    return logoDetectionData.statistics.detectionTypes.map((item, index) => ({
+      name: item.type,
+      value: item.count,
+      fill: colors[index % colors.length],
+    }));
+  }, [logoDetectionData]);
 
   // Get the most active channel data
   const mostActiveChannel = useMemo(() => {
@@ -134,6 +155,9 @@ const detectionTypeData = useMemo(() => {
       color: "hsl(var(--background))",
     },
   };
+
+
+
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
