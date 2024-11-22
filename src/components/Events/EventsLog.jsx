@@ -57,10 +57,44 @@ export function EventsLog({
 }) {
   const ITEMS_PER_PAGE_OPTIONS = [5, 10, 25, 50, `${eventData.total}`];
 
+  const shouldShowOnlyChannelId = (eventName) => {
+    return eventName === "LOGO_DETECTED" || eventName === "AUDIO_FINGERPRINT";
+  };
+
+  const getEventDetails = (event) => {
+    if (
+      shouldShowOnlyChannelId(event.Event_Name) &&
+      event.Details?.channel_id
+    ) {
+      return event.Details.channel_id;
+    }
+    return typeof event.Details === "string"
+      ? event.Details
+      : JSON.stringify(event.Details);
+  };
+
+  const getTooltipContent = (event) => {
+    if (
+      shouldShowOnlyChannelId(event.Event_Name) &&
+      event.Details?.channel_id
+    ) {
+      return `Channel ID: ${event.Details.channel_id}`;
+    }
+    return typeof event.Details === "string"
+      ? event.Details
+      : JSON.stringify(event.Details, null, 2);
+  };
+
+  const getDetailsClassName = (eventName) => {
+    if (shouldShowOnlyChannelId(eventName)) {
+      return "font-semibold bg-accent px-3 py-1 rounded";
+    }
+    return "";
+  };
+
   return (
-    <Card className="border-2 ">
+    <Card className="border-2">
       <CardHeader className="p-6 border-b">
-        {/* Header content remains the same */}
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl flex items-center gap-2">
             <BarChart2 className="h-6 w-6 text-primary" />
@@ -216,17 +250,17 @@ export function EventsLog({
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="cursor-help">
-                              {typeof event.Details === "string"
-                                ? event.Details
-                                : JSON.stringify(event.Details)}
+                            <span
+                              className={`cursor-help ${getDetailsClassName(
+                                event.Event_Name
+                              )}`}
+                            >
+                              {getEventDetails(event)}
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="max-w-xs break-words">
-                              {typeof event.Details === "string"
-                                ? event.Details
-                                : JSON.stringify(event.Details, null, 2)}
+                              {getTooltipContent(event)}
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -239,7 +273,6 @@ export function EventsLog({
           </Table>
         </ScrollArea>
 
-        {/* Pagination section remains the same */}
         {eventData.total > 0 && itemsPerPage !== "all" && (
           <div className="flex items-center justify-between px-6 py-4 border-t">
             <div className="flex-1 text-sm text-muted-foreground">

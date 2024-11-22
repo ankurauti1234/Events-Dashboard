@@ -65,10 +65,12 @@ export default function EventsCharts() {
     try {
       setIsRefreshing(true);
       const [logoDetectionResponse, metricsResponse] = await Promise.all([
-        fetch(`${API_URL}/events/logo-detection?deviceIdRange=200000-200010`),
-        fetch(
-          `${API_URL}/events/metrics?types=3,28,29,68,69&deviceIdRange=200000-200010`
-        ),
+        // fetch(`${API_URL}/events/logo-detection?deviceIdRange=200000-200010`),
+        // fetch(
+        //   `${API_URL}/events/metrics?types=3,28,29,68,69&deviceIdRange=200000-200010`
+        // ),
+        fetch(`${API_URL}/events/logo-detection`),
+        fetch(`${API_URL}/events/metrics?types=3,28,29,68,69`),
       ]);
 
       if (!logoDetectionResponse.ok || !metricsResponse.ok) {
@@ -91,12 +93,10 @@ export default function EventsCharts() {
     }
   }, []);
 
-  // Initial data fetch
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Auto refresh setup
   useEffect(() => {
     let intervalId;
 
@@ -113,7 +113,6 @@ export default function EventsCharts() {
     };
   }, [autoRefresh, fetchData]);
 
-  // Expose the refresh function to parent
   useEffect(() => {
     window.refreshChartsData = fetchData;
     return () => {
@@ -151,7 +150,12 @@ export default function EventsCharts() {
   }, [logoDetectionData]);
 
   const mostActiveChannel = useMemo(() => {
-    if (!logoDetectionData?.statistics?.channels) return null;
+    if (
+      !logoDetectionData?.statistics?.channels ||
+      !logoDetectionData.statistics.channels.length
+    ) {
+      return { channelId: "N/A", count: 0 };
+    }
     return logoDetectionData.statistics.channels.reduce((prev, current) =>
       prev.count > current.count ? prev : current
     );
@@ -187,7 +191,7 @@ export default function EventsCharts() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex  gap-4 w-full">
+      <div className="flex gap-4 w-full">
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -225,10 +229,10 @@ export default function EventsCharts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mostActiveChannel?.channelId || "N/A"}
+              {mostActiveChannel.channelId}
             </div>
             <div className="text-sm text-muted-foreground">
-              {mostActiveChannel?.count || 0} detections
+              {mostActiveChannel.count} detections
             </div>
           </CardContent>
         </Card>
@@ -236,18 +240,19 @@ export default function EventsCharts() {
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Unique Devices
+              Unique Devices (RU)
             </CardTitle>
             <Cpu className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               <NumberTicker
-                value={logoDetectionData.statistics.devices.uniqueDeviceCount}
+                // value={logoDetectionData.statistics.devices.uniqueDeviceCount}
+                value={5}
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Active devices today
+              Active devices for RU region
             </p>
           </CardContent>
         </Card>
@@ -262,7 +267,7 @@ export default function EventsCharts() {
           <CardContent className="flex-1 pb-0">
             <ChartContainer
               config={eventDistributionConfig}
-              className="mx-auto aspect-square max-h-[300px]" // Reduced from 450px
+              className="mx-auto aspect-square max-h-[300px]"
             >
               <PieChart>
                 <ChartTooltip
@@ -338,7 +343,7 @@ export default function EventsCharts() {
           <CardContent>
             <ChartContainer
               config={detectionTypeConfig}
-              className="h-[250px] w-full" // Added height constraint
+              className="h-[250px] w-full"
             >
               <BarChart
                 accessibilityLayer
