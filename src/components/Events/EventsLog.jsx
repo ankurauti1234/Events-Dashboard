@@ -58,7 +58,7 @@ export function EventsLog({
   const ITEMS_PER_PAGE_OPTIONS = [5, 10, 25, 50, `${eventData.total}`];
 
   const shouldShowOnlyChannelId = (eventName) => {
-    return eventName === "LOGO_DETECTED" || eventName === "AUDIO_FINGERPRINT";
+    return eventName === "LOGO_DETECTED";
   };
 
   const getEventDetails = (event) => {
