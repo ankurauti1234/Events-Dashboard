@@ -64,9 +64,9 @@ export function EventsLog({
   const getEventDetails = (event) => {
     if (
       shouldShowOnlyChannelId(event.Event_Name) &&
-      event.Details?.channel_id
+      event.Details?.Channel_name
     ) {
-      return event.Details.channel_id;
+      return event.Details.Channel_name;
     }
     return typeof event.Details === "string"
       ? event.Details
@@ -76,9 +76,9 @@ export function EventsLog({
   const getTooltipContent = (event) => {
     if (
       shouldShowOnlyChannelId(event.Event_Name) &&
-      event.Details?.channel_id
+      event.Details?.Channel_name
     ) {
-      return `Channel ID: ${event.Details.channel_id}`;
+      return `Channel ID: ${event.Details.Channel_name}`;
     }
     return typeof event.Details === "string"
       ? event.Details

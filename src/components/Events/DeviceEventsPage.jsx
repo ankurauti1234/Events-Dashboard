@@ -15,8 +15,9 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://apmapis.webdevava.live/api";
 
 const TIMEZONE_OFFSETS = {
-  "Russian Time": 3,
+  "Nepal Time": 5.75,
   "Indian Time": 5.5,
+  "Russian Time": 3,
   UTC: 0,
   EST: -5,
 };
@@ -29,9 +30,9 @@ export default function DeviceEventsPage() {
   const [error, setError] = useState("");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(30);
-  const [timezone, setTimezone] = useState("Russian Time");
+  const [timezone, setTimezone] = useState("Nepal Time");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState(new Set());
   const [selectedEventType, setSelectedEventType] = useState("all");

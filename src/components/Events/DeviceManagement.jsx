@@ -32,8 +32,9 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const TIMEZONE_OFFSETS = {
-  "Russian Time": 3,
+  "Nepal Time": 5.75,
   "Indian Time": 5.5,
+  "Russian Time": 3,
   UTC: 0,
   EST: -5,
 };
@@ -118,7 +119,7 @@ export function DeviceManagement({
           {deviceId ? "Device Management" : "All Devices"}
         </CardTitle>
         <Select value={timezone} onValueChange={setTimezone}>
-          <SelectTrigger className="w-[120px] h-8 text-sm">
+          <SelectTrigger className="w-96 h-8 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -321,7 +322,7 @@ export function DeviceManagement({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[5, 10, 30, 60].map((seconds) => (
+                  {[3, 5, 10, 30, 60].map((seconds) => (
                     <SelectItem key={seconds} value={seconds.toString()}>
                       {seconds < 60 ? `${seconds}s` : "1m"}
                     </SelectItem>
